@@ -1,0 +1,20 @@
+# ============================================
+# Claude Memory — excluded from version control
+# ============================================
+
+# Credentials (sensitive, local only)
+claude-memory/CREDENTIALS.md
+
+# Logs (downloaded on demand, heavy, temporary)
+claude-memory/logs/
+!claude-memory/logs/.gitkeep
+
+# Temporary files
+claude-memory/temp/
+!claude-memory/temp/.gitkeep
+
+# Windows artifacts
+desktop.ini
+
+# Claude internal files
+.claude/
