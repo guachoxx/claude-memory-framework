@@ -33,7 +33,7 @@ Update docs                  Update docs                  Update docs
 - **Provider-agnostic** — Documents can live as local `.md` files, in ClickUp, Notion, or any other platform. The methodology stays the same.
 - **Lite mode** — Small projects use just 2 documents. Promotes to full structure if it grows.
 - **Stack-agnostic** — Works with any language, framework, or toolchain.
-- **Multi-user support** — Optional per-user project namespaces. Each developer's projects are isolated while sharing team-level reference docs.
+- **Multi-user support** — Optional per-user project ownership. Each developer's projects are identified while sharing team-level reference docs.
 - **Zero dependencies** — No plugins, no extensions, no build steps.
 
 ## Providers
@@ -68,7 +68,7 @@ Want to add your own? See [providers/README.md](providers/README.md) for how to 
 
 ## Multi-User
 
-Multiple developers can work simultaneously with Claude on the same codebase. Each user creates a `.user` file with their username — projects are then isolated per user while reference docs remain shared. See [CONVENTIONS.md](CONVENTIONS.md) → "Multi-User Mode" for details.
+Multiple developers can work simultaneously with Claude on the same codebase. Each user sets `current_user` in `claude-memory/CONFIG.md` (gitignored) — projects are then assigned ownership per user while reference docs remain shared. All projects are freely accessible. See [CONVENTIONS.md](CONVENTIONS.md) → "Multi-User Mode" for details.
 
 ## Contributing
 

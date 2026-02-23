@@ -2,13 +2,14 @@
 
 > How each framework concept maps to local `.md` files.
 
-## Layer 1: Root Index
+## Layer 1: Root Index and Configuration
 
 | Framework document | Persisted as |
 |---|---|
 | Root index | `CLAUDE.md` at project root (~70 lines) |
+| Configuration | `claude-memory/CONFIG.md` (gitignored, per-user) |
 
-Claude reads this file first on every session. It contains the navigation table and distillation protocol summary.
+Claude reads `CLAUDE.md` first on every session. It contains the navigation table and distillation protocol summary. Then reads `CONFIG.md` for provider type, user identity, and connection settings.
 
 ## Layer 2: Reference Documents
 
@@ -53,7 +54,7 @@ Naming: kebab-case for project directories (e.g., `auth-refactor/`, `api-migrati
 
 ## Multi-User Mode
 
-When `current_user` is set (via `.user` file or `CLAUDE.md`), the project directory structure adds a user namespace:
+When `current_user` is set (via `claude-memory/CONFIG.md`), the project directory structure adds a user namespace:
 
 ```
 claude-memory/projects/

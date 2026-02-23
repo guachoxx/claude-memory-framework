@@ -4,12 +4,9 @@
 
 ## Configuration
 
-<!-- User identity for multi-user project separation.
-     Claude resolves current_user in this order:
-     1. .user file at project root (gitignored) — preferred for teams
-     2. current_user field below — fine for solo use
-     When empty/absent, the framework operates in single-user mode. -->
-current_user:
+<!-- User identity and provider settings live in claude-memory/CONFIG.md (gitignored).
+     See providers/ for setup instructions.
+     When current_user is not set, the framework operates in single-user mode. -->
 
 ## Quick Navigation
 
@@ -19,16 +16,23 @@ current_user:
 | Credentials, endpoints, connection | CREDENTIALS document                   |
 | Build commands                     | BUILD_COMMANDS document                |
 | Testing methodology                | TESTING_METHODOLOGY document           |
-| Conventions and memory rules       | `CONVENTIONS.md`                       |
+| Conventions and memory rules       | CONVENTIONS document                   |
 | Reusable technical lessons         | LESSONS_LEARNED document               |
 | See active projects and status     | Project index                          |
-| Available providers                | `providers/`                           |
-| Provider-specific setup            | `providers/{provider}/SETUP.md`        |
+| Available providers                | `claude-memory/providers/`             |
+| Provider-specific setup            | `claude-memory/providers/{provider}/SETUP.md` |
 | Full documentation for humans      | `HUMANS_START_HERE.md`                 |
-| Multi-user setup                   | `CONVENTIONS.md` → "Multi-User Mode"   |
+| Multi-user setup                   | CONVENTIONS → "Multi-User Mode"        |
 | Provider cache (external providers)| `claude-memory/PROVIDER_CACHE.md`      |
 
-> **Provider note**: Where each document lives depends on the configured provider. See `providers/` for details. For the default markdown-files provider, see `providers/markdown-files/MAPPING.md`.
+> **Provider note**: Where each document lives depends on the configured provider. See `claude-memory/providers/` for details.
+
+## Boot Sequence
+1. Read this file (`CLAUDE.md`) — you are here
+2. Read `claude-memory/CONFIG.md` — provider type, user identity, connection
+3. Read CONVENTIONS (from provider) — framework operational rules. **Mandatory on every session.**
+4. Read `claude-memory/PROVIDER_CACHE.md` — cached entity IDs (warm start) or discover provider structure (cold start)
+5. Ready to work
 
 ## Per-module Context
 Module context documents describe the code **as it is**: patterns, pitfalls, key files. Consult them when working on that module. These always live on disk alongside the code, regardless of provider.
@@ -49,14 +53,13 @@ Context runs out. Before that happens, **Claude MUST distill** the work into mem
 
 **Rule**: If the user doesn't ask, Claude must propose it proactively when it detects the context is filling up or at the end of a significant block of work. The next session ONLY reads distilled documents — never conversation transcripts.
 
-> **Multi-user**: Distillation targets only the `current_user`'s project namespace. Shared documents (LESSONS_LEARNED, module context) are updated normally regardless of user.
+> **Multi-user**: Distillation targets only the `current_user`'s projects. Shared documents (LESSONS_LEARNED, module context) are updated normally regardless of user.
 
-See `CONVENTIONS.md` → "Session Distillation Protocol" for the full process.
+See CONVENTIONS → "Session Distillation Protocol" for the full process.
 
 ## Memory Persistence Rules
 1. **ALWAYS** distill at the end of every session or significant block of work
-2. **ALWAYS** persist findings in the corresponding document (see table in CONVENTIONS.md)
+2. **ALWAYS** persist findings in the corresponding document (see table in CONVENTIONS)
 3. **NEVER** duplicate information — use cross-references between documents
 4. **NEVER** rely on conversation transcripts as memory — all valuable information must be in the structured documents
-5. **ALWAYS** scope project operations to the current user's namespace when `current_user` is configured
-6. **ALWAYS** update the provider cache when creating new external entities (projects, documents) in hybrid providers
+5. **ALWAYS** update the provider cache when creating new external entities (projects, documents) in hybrid providers

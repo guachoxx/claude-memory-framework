@@ -21,13 +21,14 @@ Each provider has a `SETUP.md` with step-by-step instructions. The markdown-file
 
 ## Multi-user? (optional)
 
-If multiple people use Claude Code on this codebase, each person creates a `.user` file at the project root with their username:
+If multiple people use Claude Code on this codebase, each person sets their identity in `claude-memory/CONFIG.md` (gitignored):
 
 ```
-eugenio
+## User
+current_user: Eugenio
 ```
 
-Add `.user` to `.gitignore`. Projects will be separated per user automatically. Skip this for solo use.
+Projects will be assigned ownership per user automatically. Skip this for solo use.
 
 ## 3. Test it
 

@@ -63,7 +63,7 @@ Some providers are **hybrid**: the root index (`CLAUDE.md`) and module context d
 
 ### Starting a session
 
-You don't need to do anything special. Claude reads the root index on startup, resolves your identity (from `.user` file or `CLAUDE.md`), sees the active projects in your namespace, and reads the CURRENT_STATUS of the relevant project. In 30 seconds it knows where to resume.
+You don't need to do anything special. Claude reads the root index on startup, then CONFIG.md for your identity and provider settings, then CONVENTIONS for the framework rules, then PROVIDER_CACHE for cached entity IDs (external providers only), and then reads the CURRENT_STATUS of the relevant project. In 30 seconds it knows where to resume.
 
 If you want to be explicit:
 
@@ -149,7 +149,7 @@ These always live on disk alongside the code, regardless of provider. See `CONVE
 | "Consolidate" / "Distill" / "Save progress" | Updates all memory documents according to the current phase |
 | "Create a project called X" | Creates the project container in your namespace and initial documents |
 | "Where are we with X?" | Reads the project's CURRENT_STATUS |
-| "Show me maria's projects" | Reads `projects/maria/_INDEX.md` (read-only) |
+| "Show me maria's projects" | Reads maria's projects from the project index (read-only) |
 | "Close project X" | Archives TECHNICAL_REPORT, cleans up the project container, updates the index |
 
 ---
@@ -164,7 +164,7 @@ These always live on disk alongside the code, regardless of provider. See `CONVE
 6. **Staleness** — If a CURRENT_STATUS is more than 48h old, Claude asks before assuming it's valid.
 7. **Module context is mandatory** — If the core logic of a module is modified, updating its context document is mandatory.
 8. **LESSONS_LEARNED as incubator** — When a lesson matures, it moves to the corresponding module's context document and is removed from the general document.
-9. **User isolation** — When `current_user` is set, Claude creates, reads, and updates projects only within that user's namespace. See "Multi-User Setup" below.
+9. **Ownership** — When `current_user` is set, Claude assigns ownership to new projects and can filter by owner. All projects are freely accessible. See "Multi-User Setup" below.
 
 ---
 
@@ -184,42 +184,41 @@ This framework was designed to be stack-agnostic and provider-agnostic. To adapt
 
 ## Multi-User Setup
 
-If multiple people use Claude Code on the same codebase, the framework supports per-user project separation.
+If multiple people use Claude Code on the same codebase, the framework supports per-user project ownership.
 
 ### How to enable it
 
-Each user creates a `.user` file at the project root with just their username:
+Each user sets their identity in `claude-memory/CONFIG.md` (which is gitignored):
 
 ```
-eugenio
+## User
+current_user: Eugenio
 ```
 
-Add `.user` to `.gitignore`. Alternatively, set `current_user:` in the `## Configuration` section of `CLAUDE.md` (simpler for solo use, but the file is shared in git).
-
-### What's shared vs. isolated
+### What's shared vs. owned
 
 | Concept | Scope |
 |---|---|
-| Projects, project index, project documents | **Isolated** per user |
+| Projects, project index entries | **Owned** per user (freely accessible to all) |
 | Reference documents (ARCHITECTURE, CONVENTIONS, etc.) | **Shared** across team |
 | Module context | **Shared** (code-level) |
 | LESSONS_LEARNED | **Shared** across team |
 
 ### How it works
 
-When `current_user` is set, Claude scopes all project operations to `projects/{username}/`:
-- **Create**: `"Create a project called auth-refactor"` → creates in `projects/eugenio/auth-refactor/`
-- **Read**: Claude reads from your namespace on startup
+When `current_user` is set, Claude assigns ownership to new projects and can filter by owner:
+- **Create**: `"Create a project called auth-refactor"` → creates with ownership = current user
+- **Read**: Claude can read any project regardless of owner
 - **Distill**: Only your project documents are updated (shared docs like LESSONS_LEARNED update normally)
-- **Cross-user read**: `"Show me maria's projects"` → reads `projects/maria/_INDEX.md` (read-only)
+- **Cross-user read**: `"Show me maria's projects"` → reads maria's projects from the project index
 
-See `CONVENTIONS.md` → "Multi-User Mode" for the full rules.
+See CONVENTIONS → "Multi-User Mode" for the full rules.
 
 ---
 
 ## Scalability
 
-The framework supports multi-user project separation out of the box. Set `current_user` (via `.user` file or `CLAUDE.md`) to enable per-user project namespaces. Each user gets their own project index and project containers, while reference documents and module context remain shared. See "Multi-User Setup" above.
+The framework supports multi-user project ownership out of the box. Set `current_user` in `claude-memory/CONFIG.md` to enable per-user project ownership. Each user's projects are identified by owner while reference documents and module context remain shared. See "Multi-User Setup" above.
 
 ## Quick Document Reference
 

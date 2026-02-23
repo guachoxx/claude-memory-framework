@@ -2,56 +2,86 @@
 
 > How each framework concept maps to ClickUp entities.
 
+## ClickUp API Limitations
+
+These constraints affect how the framework maps to ClickUp:
+
+1. **No nested Folders** — ClickUp Folders cannot contain other Folders. Project containers cannot be sub-folders of a "Projects" folder.
+2. **No custom field creation via API** — Custom fields must be created manually in the ClickUp UI. The framework uses native fields (Status, Assignee) instead of custom fields wherever possible.
+3. **Docs support multiple Pages** — A single Doc can contain multiple Pages, each with independent content. This is the native way to group related documents.
+
 ## Entity Mapping Overview
 
 | Framework concept | ClickUp entity |
 |---|---|
-| Document (reference / project) | Doc |
-| Container | Folder |
-| Project container | Folder inside "Projects" |
-| Project index | List with tasks (one per project) |
-| Reference | Link between Docs or `@mention` |
+| Reference document | Doc (single-page) in Reference folder |
+| Project container | Doc (multi-page) in Projects folder |
+| Project document (CURRENT_STATUS, PLAN, etc.) | Page inside a project Doc |
+| Project index | List with tasks (one task per project) |
+| Project ownership | Native Assignee on Project Index task |
+| Project status | Native Status on Project Index task/list |
+| Cross-reference | Link between Docs or `@mention` |
 | Module context | **On disk**: `{module}/CLAUDE.md` (not in ClickUp) |
-| Root index | **On disk**: `CLAUDE.md` + optional ClickUp Doc `CLAUDE Index` |
+| Root index | **On disk**: `CLAUDE.md` |
+| User configuration | **On disk**: `claude-memory/CONFIG.md` (gitignored) |
 
-> **Hybrid provider**: Module context always lives on disk. Reference documents and project documents live in ClickUp. The root index lives on disk as `CLAUDE.md` (Claude's entry point) and may optionally be mirrored as a ClickUp Doc for team navigation.
+> **Hybrid provider**: Module context and configuration always live on disk. Reference documents and project documents live in ClickUp. The root index (`CLAUDE.md`) lives on disk as Claude's entry point.
+
+### On-disk Files (ClickUp hybrid provider)
+
+These files and directories persist on disk when using the ClickUp provider:
+
+| Path | Git | Purpose |
+|------|-----|---------|
+| `CLAUDE.md` | Committed | Root index — Claude's entry point |
+| `claude-memory/CONFIG.md` | Gitignored | Provider config, user identity, connection |
+| `claude-memory/PROVIDER_CACHE.md` | Gitignored | Cached ClickUp entity IDs (auto-generated) |
+| `claude-memory/providers/` | Committed | Framework documentation (MAPPING, SETUP, README) |
+| `claude-memory/scripts/permanent/` | Committed | Reusable scripts (extraction, testing, etc.) |
+| `claude-memory/templates/` | Committed | Reusable templates (payloads, fixtures, etc.) |
+| `claude-memory/logs/` | Gitignored | Working logs and debug output (temporary) |
+| `claude-memory/temp/` | Gitignored | Temporary working files |
+| `src/{module}/CLAUDE.md` | Committed | Module context (Layer 3) — one per code module |
+
+> **Committed** = shared via git, part of the project. **Gitignored** = local to each machine, not shared.
+> Implementations may add project-specific directories (e.g., additional log caches). Add them to `.gitignore` as needed.
 
 ### Consolidated View: On Disk vs. In ClickUp
 
 ```
-ON DISK                                IN CLICKUP
-───────                                ──────────
-CLAUDE.md (root index)                 Space: "Claude Memory"
-.user (identity, gitignored)           ├── Doc: "CLAUDE Index" (optional)
-claude-memory/                         ├── Folder: "Reference"
-  └── PROVIDER_CACHE.md (gitignored)   │   ├── Doc: ARCHITECTURE
-                                       │   ├── Doc: CONVENTIONS
-src/{module}/CLAUDE.md                 │   ├── Doc: BUILD_COMMANDS
-  (one per code module)                │   ├── Doc: TESTING_METHODOLOGY
-                                       │   ├── Doc: CREDENTIALS (restricted)
-                                       │   └── Doc: LESSONS_LEARNED
-                                       └── Folder: "Projects"
-                                           ├── List: "Project Index"
-                                           └── Folder: "{project-name}"
-                                               ├── Doc: CURRENT_STATUS
-                                               ├── Doc: SPECIFICATIONS
-                                               ├── Doc: TECHNICAL_ANALYSIS
-                                               ├── Doc: PLAN
-                                               ├── Doc: CHANGELOG
-                                               ├── Doc: TECHNICAL_REPORT
-                                               └── Doc: TESTING
+ON DISK                                  IN CLICKUP
+───────                                  ──────────
+CLAUDE.md (root index)                   Space: "Claude Memory"
+claude-memory/                           ├── Folder: "Reference"
+  ├── CONFIG.md (gitignored)             │   ├── Doc: ARCHITECTURE
+  ├── PROVIDER_CACHE.md (gitignored)     │   ├── Doc: CONVENTIONS
+  ├── providers/ (committed)             │   ├── Doc: BUILD_COMMANDS
+  ├── scripts/permanent/ (committed)     │   ├── Doc: TESTING_METHODOLOGY
+  ├── templates/ (committed)             │   ├── Doc: CREDENTIALS (restricted)
+  └── logs/, temp/ (gitignored)          │   └── Doc: LESSONS_LEARNED
+                                         └── Folder: "Projects"
+                                             ├── List: "Project Index"
+src/{module}/CLAUDE.md (committed)
+                                             ├── Doc: "{project-a}"
+                                             │   ├── Page: CURRENT_STATUS
+                                             │   ├── Page: SPECIFICATIONS
+                                             │   ├── Page: TECHNICAL_ANALYSIS
+                                             │   ├── Page: PLAN
+                                             │   ├── Page: CHANGELOG
+                                             │   ├── Page: TECHNICAL_REPORT
+                                             │   └── Page: TESTING
+                                             └── Doc: "{project-b}"
+                                                 └── Page: CURRENT_STATUS
 ```
 
 ## Layer 1: Root Index
 
-The root index has two components in this hybrid provider:
-
 | Component | Where | Purpose |
 |---|---|---|
-| `CLAUDE.md` | **On disk**, project root | Bootstrap entry point. Claude reads this natively on startup. Contains system overview, provider instructions, and navigation. |
-| `CLAUDE Index` (optional) | ClickUp Doc, Space level | Team-facing navigation hub with links to all ClickUp Docs. Useful for humans browsing the Space. |
+| `CLAUDE.md` | **On disk**, project root | Bootstrap entry point. Claude reads this natively on startup. Contains system overview, boot sequence, and navigation. |
+| `claude-memory/CONFIG.md` | **On disk**, gitignored | Provider type, connection settings, user identity. Read immediately after `CLAUDE.md`. |
 
-The on-disk `CLAUDE.md` is the authoritative entry point. It should contain a note telling Claude to use MCP tools to access project and reference documents in ClickUp.
+The on-disk `CLAUDE.md` is the authoritative entry point. It directs Claude to read `CONFIG.md` for provider settings, then CONVENTIONS as the first provider document.
 
 ## Layer 2: Reference Documents
 
@@ -64,6 +94,8 @@ The on-disk `CLAUDE.md` is the authoritative entry point. It should contain a no
 | Credentials | Doc: `CREDENTIALS` | Reference folder (restricted) |
 | Lessons learned | Doc: `LESSONS_LEARNED` | Reference folder |
 
+Each reference document is a single-page Doc (one Doc, one Page with the content).
+
 ## Layer 3: Module Context
 
 | Framework document | Persisted as | Location |
@@ -74,34 +106,64 @@ Module context **always lives on disk** regardless of provider. Claude Code read
 
 ## Project Containers
 
-| Framework concept | Single-user | Multi-user |
+Each project is a **multi-page Doc** inside the Projects folder. All project documents (CURRENT_STATUS, PLAN, etc.) are **Pages** within that Doc.
+
+| Framework concept | ClickUp entity |
+|---|---|
+| Project container | Doc: `{project-name}` inside Projects folder |
+| Project document | Page inside the project Doc |
+| Project index entry | Task in "Project Index" List |
+
+### Why Docs with Pages (not Folders with Docs)
+
+ClickUp does not support nested Folders. The previous approach of "1 Folder per project inside a Projects folder" is impossible. Multi-page Docs are the native ClickUp solution:
+- A project is self-contained in a single Doc
+- Each document type is a Page within that Doc
+- Navigation is natural in the ClickUp UI (sidebar shows Pages)
+- API supports full CRUD on Pages: `clickup_create_document_page`, `clickup_update_document_page`, `clickup_get_document_pages`
+
+### Project Index
+
+Each project has a corresponding task in the "Project Index" List. This task uses **native ClickUp fields only** (custom fields cannot be created via API):
+
+| Field | Type | Purpose |
 |---|---|---|
-| Project container | Folder: `{project-name}` inside Projects | Folder: `{project-name}` inside `Projects/{username}/` |
-| Project index | List: `Project Index` | Same List, filtered by Owner (Assignee) |
+| Status | **Native status** (configured on List/Space) | Project lifecycle status |
+| Assignee | **Native assignee** | Project owner |
+| Description | **Native text** | Structured metadata (see format below) |
 
-### Project Index custom fields
+**Required statuses** (must be configured manually on the Project Index List or Space):
 
-| Field | Type | Maps to |
+| Status | Framework phase | ClickUp status type |
 |---|---|---|
-| Status | Dropdown: PLANNING, IN_PROGRESS, TESTING, READY, RELEASED, ON_HOLD | Project status |
-| Branch | Short text | Git branch |
-| Started | Date | Start date |
-| Summary | Short text | Project summary |
-| Owner | Assignee (People) | Project owner (multi-user mode) |
+| `PLANNING` | Analysis + Planning | Open |
+| `IN_PROGRESS` | Development | Open |
+| `TESTING` | QA validation | Open |
+| `READY` | Pre-release | Open |
+| `RELEASED` | Completed | Closed |
+| `ON_HOLD` | Paused | Open |
 
-Each project is a task in this List. This replaces `_INDEX.md`.
+**Task description format** for metadata that has no native field:
+
+```
+**Branch**: spike/feature-name
+**Started**: YYYY-MM
+**Summary**: One-line project description
+```
 
 ## Project Documents
 
+Each project document is a **Page** inside the project's Doc:
+
 | Framework document | ClickUp entity | Location |
 |---|---|---|
-| Current Status | Doc: `CURRENT_STATUS` | Projects/{name}/ folder |
-| Specifications | Doc: `SPECIFICATIONS` | Projects/{name}/ folder |
-| Technical Analysis | Doc: `TECHNICAL_ANALYSIS` | Projects/{name}/ folder |
-| Plan | Doc: `PLAN` | Projects/{name}/ folder |
-| Changelog | Doc: `CHANGELOG` | Projects/{name}/ folder |
-| Technical Report | Doc: `TECHNICAL_REPORT` | Projects/{name}/ folder |
-| Testing | Doc: `TESTING` | Projects/{name}/ folder |
+| Current Status | Page: `CURRENT_STATUS` | Doc: `{project-name}` |
+| Specifications | Page: `SPECIFICATIONS` | Doc: `{project-name}` |
+| Technical Analysis | Page: `TECHNICAL_ANALYSIS` | Doc: `{project-name}` |
+| Plan | Page: `PLAN` | Doc: `{project-name}` |
+| Changelog | Page: `CHANGELOG` | Doc: `{project-name}` |
+| Technical Report | Page: `TECHNICAL_REPORT` | Doc: `{project-name}` |
+| Testing | Page: `TESTING` | Doc: `{project-name}` |
 
 ## Cross-references
 
@@ -109,7 +171,7 @@ ClickUp supports two mechanisms:
 - **Doc links**: Embed links to other Docs using ClickUp's native linking
 - **@mentions**: Reference Docs or tasks inline with `@`
 
-Example in a Doc:
+Example in a Page:
 ```
 See @CONVENTIONS → "Session Distillation Protocol"
 ```
@@ -117,8 +179,8 @@ See @CONVENTIONS → "Session Distillation Protocol"
 ## Version Control
 
 - ClickUp Docs maintain edit history natively
-- For formal versioning, note the date and author at the top of each Doc update
-- CREDENTIALS Doc should have restricted permissions instead of `.gitignore`
+- For formal versioning, note the date and author at the top of each Page update
+- CREDENTIALS Doc should have restricted permissions
 
 ## Read/Write Operations
 
@@ -126,32 +188,42 @@ Claude uses **two access methods** in this hybrid provider:
 
 **On disk (native file tools):**
 - Root index (`CLAUDE.md`) — read on every session startup
+- Configuration (`claude-memory/CONFIG.md`) — read on startup for provider settings
 - Provider cache (`claude-memory/PROVIDER_CACHE.md`) — read on startup for cached entity IDs
 - Module context (`{module}/CLAUDE.md`) — read when working on a module
 
 **In ClickUp (MCP tools):**
-- Reading Doc content (reference and project documents)
-- Updating Doc content
-- Creating new Docs (when creating a project or new reference document)
-- Listing Docs in a Folder (to find project documents)
-- Managing tasks in Lists (for Project Index — creating, updating status)
 
-> **Performance note**: With a populated Provider Cache, Claude skips the MCP search/list calls that would otherwise be needed to resolve entity IDs. See "Provider Cache" section below.
+| Operation | MCP tool | Parameters |
+|---|---|---|
+| Read reference Doc | `clickup_get_document_pages` | `(doc_id, [page_id])` |
+| Read project Page | `clickup_get_document_pages` | `(doc_id, [page_id])` |
+| Update project Page | `clickup_update_document_page` | `(doc_id, page_id, content, content_format="text/md")` |
+| Create new Page | `clickup_create_document_page` | `(doc_id, name, content, content_format="text/md")` |
+| List Pages in a Doc | `clickup_list_document_pages` | `(doc_id)` |
+| Create project Doc | `clickup_create_document` | `(name, parent={id, type="5"}, visibility, create_page)` |
+| Read Project Index task | `clickup_get_task` | `(task_id)` |
+| Update task status | `clickup_update_task` | `(task_id, status)` |
+| Create task | `clickup_create_task` | `(name, list_id, assignees, description)` |
 
-## Lite Mode in ClickUp
+> **Performance note**: With a populated Provider Cache, Claude uses Doc IDs and Page IDs directly — no search or list calls needed. See "Provider Cache" section below.
 
-For small projects, create only:
-- Doc: `CURRENT_STATUS` (with Analysis and Plan sections inline)
-- Doc: `CHANGELOG`
+## Lite Mode
 
-Both inside a single project Folder. Promote to full structure if the project grows.
+For small projects (fix, scoped refactor, <3 phases), create only:
+- Page: `CURRENT_STATUS` (with Analysis and Plan sections inline)
+- Page: `CHANGELOG`
+
+Both as Pages inside the project Doc. Promote to full structure if the project grows.
 
 ## Archiving Completed Projects
 
 When a project reaches RELEASED status:
-1. Move `TECHNICAL_REPORT` Doc to a "Documentation" folder (or your team's docs Space)
-2. Archive the project Folder in ClickUp
-3. Update the task in `Project Index` List to RELEASED status
+1. Keep `TECHNICAL_REPORT`, `SPECIFICATIONS`, and `TESTING` Pages for reference
+2. Update the task in `Project Index` to RELEASED status (closed)
+3. Optionally archive or move the project Doc
+
+---
 
 ## Provider Cache
 
@@ -164,13 +236,14 @@ Every ClickUp entity that Claude needs to access by ID is cached in `claude-memo
 | Workspace | Workspace ID | Root of all API calls |
 | Space | Space ID + name | Container for all framework content |
 | Reference Folder | Folder ID | Contains all reference Docs |
-| Each reference Doc | Doc ID | Direct access without searching |
-| Projects Folder | Folder ID | Parent of all project containers |
+| Each reference Doc | Doc ID + Page ID | Direct access to content |
+| Projects Folder | Folder ID | Contains all project Docs |
 | Project Index List | List ID | Where project tasks live |
-| Each project Folder | Folder ID | Direct navigation to project |
-| Each project Doc | Doc ID | Direct read/write without listing |
+| Each project Doc | Doc ID | Parent container for project Pages |
+| Each project Page | Page ID | Direct read/write access |
+| Each project task | Task ID | Direct status/assignee access |
 
-### ClickUp Cache Template
+### Cache Template
 
 ```markdown
 # Provider Cache
@@ -184,14 +257,14 @@ Every ClickUp entity that Claude needs to access by ID is cached in `claude-memo
 - Space name: Claude Memory
 
 ## Reference Documents
-| Document | Doc ID | Parent |
-|---|---|---|
-| ARCHITECTURE | abc123 | Reference (folder: fol456) |
-| CONVENTIONS | def789 | Reference |
-| BUILD_COMMANDS | ghi012 | Reference |
-| TESTING_METHODOLOGY | jkl345 | Reference |
-| CREDENTIALS | mno678 | Reference |
-| LESSONS_LEARNED | pqr901 | Reference |
+| Document | Doc ID | Page ID | Parent |
+|---|---|---|---|
+| ARCHITECTURE | abc123 | page001 | Reference (folder: fol456) |
+| CONVENTIONS | def789 | page002 | Reference |
+| BUILD_COMMANDS | ghi012 | page003 | Reference |
+| TESTING_METHODOLOGY | jkl345 | page004 | Reference |
+| CREDENTIALS | mno678 | page005 | Reference |
+| LESSONS_LEARNED | pqr901 | page006 | Reference |
 
 ## Project Infrastructure
 | Entity | ID | Type |
@@ -201,90 +274,95 @@ Every ClickUp entity that Claude needs to access by ID is cached in `claude-memo
 | Project Index | lst012 | List |
 
 ## Projects
-| Project | Folder ID | Documents |
-|---|---|---|
-| auth-refactor | fol345 | CURRENT_STATUS: doc111, PLAN: doc222, TECHNICAL_ANALYSIS: doc333 |
-| api-migration | fol678 | CURRENT_STATUS: doc444, CHANGELOG: doc555 |
+| Project | Doc ID | Task ID | Owner | Pages |
+|---|---|---|---|---|
+| auth-refactor | doc111 | tsk001 | eugenio | CURRENT_STATUS: pg101, PLAN: pg102, TECHNICAL_ANALYSIS: pg103 |
+| api-migration | doc222 | tsk002 | maria | CURRENT_STATUS: pg201, CHANGELOG: pg202 |
 ```
 
 ### How Claude Uses the Cache
 
-**Session startup (with cache)**:
+**Session startup (warm — cache exists)**:
 1. Claude reads `CLAUDE.md` (on disk)
-2. Claude reads `claude-memory/PROVIDER_CACHE.md` (on disk)
-3. Claude now has all ClickUp IDs — no MCP search calls needed
-4. To read CURRENT_STATUS for a project: uses the Doc ID directly via `clickup_get_document_pages`
+2. Claude reads `claude-memory/CONFIG.md` (on disk)
+3. Claude reads `claude-memory/PROVIDER_CACHE.md` (on disk) — all IDs available
+4. Claude reads CONVENTIONS (ClickUp, using cached Doc ID + Page ID)
+5. Ready to work
 
-**Session startup (without cache)**:
-1. Claude reads `CLAUDE.md`
-2. No cache found — Claude generates it (see "Initial Generation" below)
+**Session startup (cold — no cache)**:
+1. Claude reads `CLAUDE.md` + `CONFIG.md`
+2. Claude discovers ClickUp structure (see "Initial Generation" below)
+3. Claude reads CONVENTIONS
+4. Ready to work
 
 **During work**:
-- When Claude creates a new project Folder or Doc → appends the new ID to the cache
+- When Claude creates a new project Doc or Page → appends the new ID to the cache
 - When a cached ID returns a 404/not-found error → Claude regenerates the entire cache
 
 ### Initial Generation Workflow
 
-When the cache file does not exist, Claude generates it by querying ClickUp:
+When the cache file does not exist, Claude generates it by querying ClickUp using settings from `CONFIG.md`:
 
-1. `clickup_get_workspace_hierarchy` → get Space ID, Folder IDs, List IDs
-2. For the Reference Folder: `clickup_search` with `asset_types: ["doc"]` scoped to the Reference Folder → get all reference Doc IDs
-3. For the Projects Folder: list sub-Folders → get each project Folder ID
-4. For each project Folder: `clickup_search` or list Docs → get project Doc IDs
-5. Write the complete cache to `claude-memory/PROVIDER_CACHE.md`
+1. `clickup_get_workspace_hierarchy` → find the Space by name (from CONFIG.md), get Folder IDs, List IDs
+2. For the Reference Folder: `clickup_search` with `asset_types: ["doc"]` scoped to the folder → get reference Doc IDs
+3. For each reference Doc: `clickup_list_document_pages` → get Page IDs
+4. For the Projects Folder: `clickup_search` with `asset_types: ["doc"]` → get project Doc IDs
+5. For each project Doc: `clickup_list_document_pages` → get Page IDs
+6. Write the complete cache to `claude-memory/PROVIDER_CACHE.md`
 
 ### Update Triggers
 
 | Action | Cache update |
 |---|---|
-| Create project (new Folder + Docs) | Append project row + Doc IDs |
-| Create new Doc in existing project | Update the project's Documents cell |
+| Create project (new Doc + Pages + task) | Append project row with Doc ID, Task ID, Page IDs |
+| Create new Page in existing project | Update the project's Pages cell |
 | Archive/close project | Remove the project row |
-| Rename a project or document | Update the affected row |
+| Rename a project or Page | Update the affected row |
 | Cached ID returns error | Regenerate entire cache |
 
 ---
 
 ## Multi-User Mode
 
-When `current_user` is set (via `.user` file or `CLAUDE.md`), the ClickUp structure adds a per-user Folder inside Projects:
+When `current_user` is set in `CONFIG.md`, Claude uses the native Assignee field on Project Index tasks for ownership.
+
+### How It Works
+
+All project Docs live **flat** inside the Projects folder (no per-user sub-folders — ClickUp does not support nested Folders). Ownership is tracked via the task assignee:
 
 ```
 Space: "Claude Memory"
 ├── Folder: "Reference"
 └── Folder: "Projects"
-    ├── List: "Project Index"              ← Shared list, with Owner (Assignee) field
-    ├── Folder: "eugenio"
-    │   └── Folder: "auth-refactor"
-    │       ├── Doc: "CURRENT_STATUS"
-    │       └── ...
-    └── Folder: "maria"
-        └── Folder: "checkout-fix"
-            └── ...
+    ├── List: "Project Index"
+    │   ├── Task: "auth-refactor"    → Assignee: eugenio
+    │   ├── Task: "checkout-fix"     → Assignee: maria
+    │   └── Task: "api-migration"    → Assignee: eugenio
+    ├── Doc: "auth-refactor"
+    ├── Doc: "checkout-fix"
+    └── Doc: "api-migration"
 ```
 
-### Shared Project Index with Owner Field
-
-The Project Index List is shared across all users. The `Owner` field (Assignee type) identifies who owns each project.
+### Ownership Operations
 
 When `current_user` is set, Claude:
-- **Creates** new project tasks with Owner = `current_user` (resolved via `clickup_resolve_assignees`)
-- **Filters** the Project Index by Owner when listing "my projects"
-- **Can read** all projects (any Owner) when asked to view another user's work
-- **Creates** project Folders inside `Projects/{current_user}/`
+- **Creates** new project tasks with Assignee = `current_user` (resolved via `clickup_resolve_assignees`)
+- **Filters** the Project Index by Assignee when listing "my projects"
+- **Can read** all projects regardless of owner (libre acceso)
+- **Creates** project Docs directly inside the Projects folder
 
 ### Per-User Views (recommended)
 
 Create a filtered View on the Project Index List for each user:
 - View name: `{username}'s Projects`
-- Filter: Owner = {username}
+- Filter: Assignee = {username}
 
 This keeps the ClickUp UI clean. It is optional — Claude filters programmatically regardless.
 
 ### Mapping current_user to ClickUp Identity
 
-The `current_user` value must be resolvable by the ClickUp MCP server. Use one of:
-- ClickUp display name (e.g., `eugenio`)
+The `current_user` value in `CONFIG.md` must be resolvable by the ClickUp MCP server. Use one of:
+- ClickUp display name (e.g., `Eugenio`)
 - ClickUp email (e.g., `eugenio@company.com`)
 
 Claude calls `clickup_resolve_assignees` with the `current_user` value to get the ClickUp user ID for assignee operations.
@@ -292,6 +370,6 @@ Claude calls `clickup_resolve_assignees` with the `current_user` value to get th
 ### Single-User Fallback
 
 When `current_user` is NOT set:
-- Project Folders are created directly inside "Projects" (no user subfolder)
-- Project Index tasks have no Owner assigned
+- Project Docs are created inside "Projects" folder (same structure)
+- Project Index tasks have no Assignee
 - Behaves identically to single-user mode

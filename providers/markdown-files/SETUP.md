@@ -41,6 +41,7 @@ Auth via NextAuth.js, deployed on Vercel.
 Append to your project's `.gitignore`:
 
 ```
+claude-memory/CONFIG.md
 claude-memory/CREDENTIALS.md
 claude-memory/logs/
 claude-memory/temp/
@@ -67,21 +68,29 @@ Work normally. When done, say **"Consolidate"**. Claude updates the memory docum
 
 If multiple people use Claude Code on the same codebase:
 
-### 1. Create a `.user` file at the project root
+### 1. Set `current_user` in CONFIG.md
 
-Each user creates this file with just their username:
-```
-eugenio
+Each user creates `claude-memory/CONFIG.md` (gitignored) with their identity:
+
+```markdown
+# Memory Configuration
+> Per-user, per-machine. This file is gitignored — do not commit.
+
+## User
+current_user: eugenio
+
+## Provider
+provider: markdown-files
 ```
 
-Add `.user` to `.gitignore` so each user keeps their own identity locally.
+Add `claude-memory/CONFIG.md` to `.gitignore` so each user keeps their own identity locally.
 
 ### 2. Create your user namespace
 
 ```
 claude-memory/projects/
 └── eugenio/
-    └── _INDEX.md          ← Copy the per-user _INDEX.md template from CONVENTIONS.md
+    └── _INDEX.md          ← Create with project name, status, branch columns
 ```
 
 ### 3. Migration from single-user
@@ -103,6 +112,7 @@ Claude Code reads and writes `.md` files directly via its native file tools. No 
 | Framework concept | Markdown-files implementation |
 |---|---|
 | Root index | `CLAUDE.md` at project root |
+| Configuration | `claude-memory/CONFIG.md` (.gitignored) |
 | Reference documents | `claude-memory/*.md` |
 | Project container | `claude-memory/projects/{project-name}/` |
 | Project index | `claude-memory/projects/_INDEX.md` |
