@@ -11,7 +11,7 @@ Read docs → Work →           Read docs → Work →           Read docs → 
 Update docs                  Update docs                  Update docs
 ```
 
-**Architected by [Eugenio Ruiz de la Cuesta](https://www.linkedin.com/in/eugenio-ruiz-de-la-cuesta-fdez/) (orchestrating Claude Opus 4.6)** · v0.2 · [Unlicense](LICENSE)
+**Architected by [Eugenio Ruiz de la Cuesta](https://www.linkedin.com/in/eugenio-ruiz-de-la-cuesta-fdez/) (orchestrating Claude Opus 4.6)** · v0.2.3 · [Unlicense](LICENSE)
 [@guachoxx](https://github.com/guachoxx)
 
 ---
@@ -20,7 +20,7 @@ Update docs                  Update docs                  Update docs
 
 | Problem | Without the framework | With the framework |
 |---------|----------------------|-------------------|
-| New session | Claude starts from zero | Claude reads CURRENT_STATUS, resumes in 30 seconds |
+| New session | Claude starts from zero | Claude reads Project Index, picks up where you left off |
 | Long session | Context fills up, hallucinations start | Distillation protocol saves progress before context runs out |
 | Technical decisions | Lost in conversation transcripts | Persisted in structured documents |
 | Onboarding Claude to your code | Re-explain every time | Module context documents provide instant context |
@@ -33,7 +33,7 @@ Update docs                  Update docs                  Update docs
 - **Provider-agnostic** — Documents can live as local `.md` files, in ClickUp, Notion, or any other platform. The methodology stays the same.
 - **Lite mode** — Small projects use just 2 documents. Promotes to full structure if it grows.
 - **Stack-agnostic** — Works with any language, framework, or toolchain.
-- **Multi-user support** — Optional per-user project namespaces. Each developer's projects are isolated while sharing team-level reference docs.
+- **Multi-user support** — Optional per-user project ownership. Each developer's projects are identified while sharing team-level reference docs.
 - **Zero dependencies** — No plugins, no extensions, no build steps.
 
 ## Providers
@@ -42,10 +42,10 @@ A **provider** determines where your framework documents are stored. Choose one:
 
 | Provider | Documents stored in | Best for |
 |---|---|---|
-| [markdown-files](providers/markdown-files/) | Local `.md` files in the repo | Solo developers, simple setups, full offline access |
-| [clickup](providers/clickup/) | ClickUp Docs and Tasks | Teams already using ClickUp |
+| [markdown-files](claude-memory/providers/markdown-files/) | Local `.md` files in the repo | Solo developers, simple setups, full offline access |
+| [clickup](claude-memory/providers/clickup/) | ClickUp Docs and Tasks | Teams already using ClickUp |
 
-Want to add your own? See [providers/README.md](providers/README.md) for how to create a new provider.
+Want to add your own? See [claude-memory/providers/README.md](claude-memory/providers/README.md) for how to create a new provider.
 
 ## Documentation
 
@@ -53,12 +53,13 @@ Want to add your own? See [providers/README.md](providers/README.md) for how to 
 |----------|---------------|
 | **[QUICKSTART.md](QUICKSTART.md)** | **5-minute setup guide — start here** |
 | [HUMANS_START_HERE.md](HUMANS_START_HERE.md) | Full documentation: architecture, workflow, rules, adaptation guide |
-| [CONVENTIONS.md](CONVENTIONS.md) | Framework rules, document templates, distillation protocol |
-| [providers/](providers/) | Provider-specific setup and mapping guides |
+| [CONVENTIONS.md](claude-memory/CONVENTIONS.md) | Framework rules, document templates, distillation protocol |
+| [providers/](claude-memory/providers/) | Provider-specific setup and mapping guides |
+| [example/](example/) | Worked end-to-end example with realistic project content |
 
 ## How It Works
 
-1. **Session starts** — Claude reads the root index (~70 lines), sees active projects, reads the CURRENT_STATUS of the relevant one. Oriented in ≤30 seconds.
+1. **Session starts** — Claude reads the root index (~70 lines), CONVENTIONS, and the Project Index. Oriented in ≤30 seconds. Reads a project's CURRENT STATUS only when you ask to work on it.
 
 2. **During work** — Claude reads deeper documents only as needed: analysis, plan, module context. No wasted tokens on unnecessary context.
 
@@ -68,7 +69,7 @@ Want to add your own? See [providers/README.md](providers/README.md) for how to 
 
 ## Multi-User
 
-Multiple developers can work simultaneously with Claude on the same codebase. Each user creates a `.user` file with their username — projects are then isolated per user while reference docs remain shared. See [CONVENTIONS.md](CONVENTIONS.md) → "Multi-User Mode" for details.
+Multiple developers can work simultaneously with Claude on the same codebase. Each user sets `current_user` in `claude-memory/CONFIG.md` (gitignored) — projects are then assigned ownership per user while reference docs remain shared. All projects are freely accessible. See [CONVENTIONS.md](claude-memory/CONVENTIONS.md) → "Multi-User Mode" for details.
 
 ## Contributing
 

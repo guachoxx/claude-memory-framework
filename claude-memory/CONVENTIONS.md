@@ -6,15 +6,35 @@
 
 ---
 
+## Boot Sequence
+
+Every session starts with this sequence, regardless of provider:
+
+1. **Read `CLAUDE.md`** (on disk) — project overview, navigation, boot instructions
+2. **Read `claude-memory/CONFIG.md`** (on disk, gitignored) — provider type, user identity, connection settings
+   - If missing: ask the user to create it. See `claude-memory/providers/` for setup instructions.
+   - Verify the configured provider is accessible (MCP server connected or API key set).
+3. **Read CONVENTIONS** (from provider) — operational rules for the framework. **This is mandatory on every session**, warm or cold.
+4. **Read `claude-memory/PROVIDER_CACHE.md`** (on disk, gitignored) — cached entity IDs
+   - If exists → **warm start**: all IDs available, skip discovery
+   - If missing → **cold start**: discover provider structure using CONFIG.md settings, generate the cache
+5. **Read Project Index** — overview of active projects (names, statuses, owners). Do NOT read individual project CURRENT STATUS pages at this point.
+6. Ready to work. Read a project's CURRENT STATUS only when the user asks to work on it.
+
+> **Why CONVENTIONS first**: CONVENTIONS defines how Claude operates — distillation rules, naming, lifecycle, persistence. Without it, Claude cannot correctly create, update, or organize documents. It must be loaded before any project work begins.
+
+---
+
 ## Layered Memory Architecture
 
-### Layer 1: Root Index
-- Recommended maximum ~70 lines. Only contains: system overview, navigation table, persistence rules.
+### Layer 1: Root Index and Configuration
+- **`CLAUDE.md`** (on disk, project root): Recommended maximum ~70 lines. Only contains: system overview, boot sequence, navigation table, persistence rules summary.
+- **`claude-memory/CONFIG.md`** (on disk, gitignored): Provider type, connection settings, user identity. Per-user, per-machine.
 - Does **NOT** contain: credentials, builds, changelogs, project status, lessons learned.
 - Never duplicate information that exists in other documents — only point to them with references.
 
 ### Layer 2: Reference Documents
-- Specialized documents: ARCHITECTURE, CREDENTIALS, BUILD_COMMANDS, etc.
+- Specialized documents: ARCHITECTURE, CREDENTIALS, BUILD COMMANDS, etc.
 - Each document has a single purpose. If a piece of data fits in more than one document, it goes in the most specific one.
 - The project container holds the working memory for active projects.
 
@@ -28,143 +48,114 @@
 
 | Type of information                          | Where it goes                                              |
 |----------------------------------------------|------------------------------------------------------------|
+| Provider config, user identity               | `claude-memory/CONFIG.md` (on disk, gitignored)            |
 | What this module does, patterns, pitfalls    | Module context document for `src/{module}/`                |
 | Scope, requirements, acceptance criteria     | Project's SPECIFICATIONS document                          |
-| Prior analysis, mappings, constraints        | Project's TECHNICAL_ANALYSIS document                      |
+| Prior analysis, mappings, constraints        | Project's TECHNICAL ANALYSIS document                      |
 | Phase plan, files, order                     | Project's PLAN document                                    |
-| Deliverable technical documentation          | Project's TECHNICAL_REPORT document                        |
-| Project status, next step                    | Project's CURRENT_STATUS document                          |
+| Deliverable technical documentation          | Project's TECHNICAL REPORT document                        |
+| Project status, next step                    | Project's CURRENT STATUS document                          |
 | Test scenarios, edge cases, acceptance tests | Project's TESTING document                                 |
 | Project change history                       | Project's CHANGELOG document                               |
-| Reusable technical lessons                   | LESSONS_LEARNED document                                   |
+| Reusable technical lessons                   | LESSONS LEARNED document                                   |
 | Credentials and endpoints                    | CREDENTIALS document                                       |
-| Build commands                               | BUILD_COMMANDS document                                    |
+| Build commands                               | BUILD COMMANDS document                                    |
 | Global system architecture                   | ARCHITECTURE document                                      |
-| User's active projects and project index     | User's project index (`projects/{username}/_INDEX.md`)     |
-| Team overview of all users' projects         | Root project index (`projects/_INDEX.md`, optional)        |
+| User's active projects and project index     | Provider's project index                                   |
 | Provider entity ID cache (auto-generated)    | `claude-memory/PROVIDER_CACHE.md` (gitignored, on disk)   |
 
-> **Provider note**: The specific format and location of each document depends on your chosen provider. See `providers/` for details.
+> **Provider note**: The specific format and location of each document depends on your chosen provider. See `claude-memory/providers/{provider}/MAPPING.md` for how framework concepts map to provider entities.
 
 ---
 
 ## Naming
 
-- **UPPERCASE** for reference documents: ARCHITECTURE, CHANGELOG, PLAN, CURRENT_STATUS
+### Document names (conceptual)
+- **UPPERCASE with SPACES**: ARCHITECTURE, CHANGELOG, PLAN, CURRENT STATUS, LESSONS LEARNED
+- These are the canonical names used in prose, cross-references, and provider entities (ClickUp Docs/Pages, etc.)
+
+### File names (markdown-files provider)
+- **UPPERCASE with UNDERSCORES**: `CURRENT_STATUS.md`, `TECHNICAL_ANALYSIS.md`, `LESSONS_LEARNED.md`
+- Underscores replace spaces because these are filesystem paths
+
+### General rules
 - **snake_case** for scripts generated by Claude or the user
-- **No spaces**, no special characters, no accents in names
+- **No special characters**, no accents in document or file names
 - **No status suffixes** in names — status is managed ONLY in the project index
 - **Language**: English for document names; content in English or your team's language as needed
+
+> **Why this matters**: Some providers (e.g., ClickUp) cannot search for entities with underscores in their names. The canonical form uses spaces; each provider maps to its native convention. See your provider's MAPPING.md for details.
 
 ## Project Container Naming
 
 - **kebab-case**: `auth-refactor`, `api-migration`, `checkout-fix`
 - No status suffixes: ~~`auth-refactor-IN_DEVELOPMENT`~~ → `auth-refactor`
-- In multi-user mode, the username is a namespace prefix, NOT part of the project name: `projects/{username}/{project-name}/`
 
 ---
 
 ## Multi-User Mode
 
-### Overview
+### Configuration
 
-The framework supports optional per-user project separation. When a user identity is configured, each user gets an isolated project namespace. Reference documents and module context remain shared at the team level.
+User identity is set in `claude-memory/CONFIG.md` (gitignored, per-user):
 
-### User Identity Resolution
+```
+## User
+current_user: Eugenio
+```
 
-Claude resolves the current user in this order:
-1. **`.user` file** at the project root (gitignored) — contains just the username on one line
-2. **`current_user:` field** in the `## Configuration` section of `CLAUDE.md`
+When `current_user` is NOT set, the framework operates in **single-user mode** (backward compatible with all existing behavior).
 
-The `.user` file is the recommended approach for teams — it avoids git conflicts since `CLAUDE.md` is committed to the repo. For solo developers, setting `current_user` directly in `CLAUDE.md` is fine.
+The `current_user` value must match the user's identity in the provider (e.g., ClickUp display name, email) so the provider can resolve ownership.
 
-When neither is set, the framework operates in **single-user mode** (backward compatible with all existing behavior).
+### Ownership
 
-Username rules:
-- Lowercase, alphanumeric, hyphens allowed (e.g., `eugenio`, `maria-g`)
-- Must match the user's identity in the external provider if applicable (ClickUp display name, etc.)
-- Must be consistent across sessions
+- Project ownership is tracked in the provider's project index using the native mechanism for the provider (e.g., assignee field in ClickUp, metadata in markdown files).
+- All projects are freely accessible to all users. Ownership indicates who is currently responsible, not access restriction.
+- When `current_user` is set, Claude:
+  - **Creates** new projects with ownership set to `current_user`
+  - **Filters** the project index by owner when listing "my projects"
+  - **Can read and modify** any project regardless of owner
 
 ### What Is Scoped Per User vs. Shared
 
 | Concept | Scope | Rationale |
 |---|---|---|
-| Project containers | **Per-user** — `projects/{username}/{project-name}/` | Each user's work is isolated |
-| Project index | **Per-user** — `projects/{username}/_INDEX.md` | Avoids merge conflicts |
-| Project documents (CURRENT_STATUS, etc.) | **Per-user** — inside the user's project container | Session context is personal |
+| Project containers | **Per-user** ownership | Each user's work is identified |
+| Project index entries | **Per-user** ownership | Filterable by owner |
+| Project documents (CURRENT STATUS, etc.) | **Per-user** ownership (inside the user's project) | Session context is personal |
 | Reference documents (ARCHITECTURE, etc.) | **Shared** — team-level | Team knowledge |
 | Module context (`{module}/CLAUDE.md`) | **Shared** — code-level | Code documentation, not project documentation |
-| LESSONS_LEARNED | **Shared** — team-level | Reusable across the team |
+| LESSONS LEARNED | **Shared** — team-level | Reusable across the team |
 | CREDENTIALS | **Shared** — team-level | Same environments for all |
 
-### Path Resolution Rule
+### Single-User Fallback
 
-When `current_user` is resolved:
-- Project container: `projects/{current_user}/{project-name}/`
-- Project index: `projects/{current_user}/_INDEX.md`
-
-When `current_user` is NOT set (single-user mode):
-- Project container: `projects/{project-name}/`
-- Project index: `projects/_INDEX.md`
-
-### Cross-User Access
-
-- Users **CAN** read other users' projects: `"Read maria's CURRENT_STATUS for api-migration"` → navigates to `projects/maria/api-migration/CURRENT_STATUS`
-- Users **MUST NOT** write to other users' projects during distillation or normal operations
-- Claude enforces this by always writing to the `current_user` namespace
-- Shared documents (LESSONS_LEARNED, module context) are writable by any user
-
-### Team Overview Index (optional)
-
-A `projects/_INDEX.md` at the root of the projects area may exist as a team-level overview linking to each user's index. Claude does **NOT** use this for day-to-day navigation — it reads `projects/{current_user}/_INDEX.md` instead.
-
-### Per-User Project Index Template
-
-```markdown
-# Project Index — {username}
-
-> Projects owned by {username}. Single source of truth for their project status.
-
-## Active Projects
-
-| Project           | Status        | Branch                  | Started    | Summary                                |
-|-------------------|---------------|-------------------------|------------|----------------------------------------|
-
-## Completed Projects
-
-| Project           | Released   | Tag / Branch            | Summary                                |
-|-------------------|------------|-------------------------|----------------------------------------|
-```
-
-### Migration from Single-User to Multi-User
-
-1. Create a `.user` file at the project root with your username (add `.user` to `.gitignore`)
-2. Create `projects/{your-name}/` (or equivalent in your provider)
-3. Move existing project containers into `projects/{your-name}/`
-4. Move `projects/_INDEX.md` to `projects/{your-name}/_INDEX.md`
-5. (Optional) Create a new `projects/_INDEX.md` as a team overview
-6. Verify: ask Claude to read the project index — it should find your projects
+When `current_user` is NOT set:
+- Projects have no owner assigned
+- No filtering applied — all projects are listed
+- Behaves identically to single-user mode
 
 ---
 
 ## Project Lifecycle
 
 ### 1. Create project
-- Create a project container in the projects area (in multi-user mode: `projects/{current_user}/{project-name}/`)
-- Create the CURRENT_STATUS document (mandatory from the very start)
+- Create a project container in the provider (see provider MAPPING.md for the specific entity type)
+- Create the CURRENT STATUS document (mandatory from the very start)
 - Create the SPECIFICATIONS document with the initial scope, requirements, and acceptance criteria
-- Register in the project index with status `PLANNING` (in multi-user mode: the user's own `_INDEX.md`)
+- Register in the project index with status `PLANNING` and assign ownership to `current_user`
 
 ### Small Projects (Lite Mode)
 If the project is a fix, a scoped refactor, or a task spanning only a few sessions (plan with fewer than 3 phases):
-- Only CURRENT_STATUS + CHANGELOG — do not create SPECIFICATIONS, TECHNICAL_ANALYSIS, PLAN, TECHNICAL_REPORT, or TESTING
-- Requirements, analysis, and plan go as sections inside CURRENT_STATUS
+- Only CURRENT STATUS + CHANGELOG — do not create SPECIFICATIONS, TECHNICAL ANALYSIS, PLAN, TECHNICAL REPORT, or TESTING
+- Requirements, analysis, and plan go as sections inside CURRENT STATUS
 - If the project grows and becomes complex, promote to full structure at that point
 
 ### 2. ANALYSIS Phase (status: `PLANNING`)
 The first sessions are dedicated to understanding the problem, analyzing the existing code involved, identifying constraints, and defining the approach. These are the sessions that generate the most context and where distillation is most critical.
 
-**Primary output**: TECHNICAL_ANALYSIS
+**Primary output**: TECHNICAL ANALYSIS
 - Analysis of the problem or requirement to be solved
 - Existing code involved: modules, classes, patterns, dependencies
 - Relevant data structures (tables, models, relationships)
@@ -190,7 +181,7 @@ With the analysis done, the concrete implementation plan is defined.
 ### 4. DEVELOPMENT Phase (status: `IN_PROGRESS`)
 Iterative implementation phase by phase. Each session produces code and updates memory.
 
-**Primary output**: TECHNICAL_REPORT
+**Primary output**: TECHNICAL REPORT
 - Technical documentation of the project, enriched as development progresses
 - Reflects what was built: files, classes, methods, data structures
 - Technical decisions made during implementation and their rationale
@@ -214,13 +205,13 @@ Development completed. Validation, QA, pre-production vs production comparison.
 
 ### 6. Complete (status: `RELEASED`)
 When the project is released to production:
-- TECHNICAL_REPORT → **kept** as technical documentation (move to a permanent documentation area)
-- SPECIFICATIONS → **kept** alongside TECHNICAL_REPORT as the original requirements reference
-- TESTING → **kept** alongside TECHNICAL_REPORT as the verification record
-- TECHNICAL_ANALYSIS, PLAN → can be discarded (their value is already reflected in TECHNICAL_REPORT)
+- TECHNICAL REPORT → **kept** as technical documentation
+- SPECIFICATIONS → **kept** alongside TECHNICAL REPORT as the original requirements reference
+- TESTING → **kept** alongside TECHNICAL REPORT as the verification record
+- TECHNICAL ANALYSIS, PLAN → can be discarded (their value is already reflected in TECHNICAL REPORT)
 - CHANGELOG → archive if applicable
-- Remove the project container from the user's project namespace
-- Update the user's project index: move the entry to the "Completed" section
+- Archive or close the project container in the provider
+- Update the project index: move the entry to RELEASED status
 - If the project generated module context documents, those **are kept** (they are code context, not project context)
 
 ### Project Statuses (in the project index)
@@ -234,17 +225,19 @@ When the project is released to production:
 | `RELEASED`      | Completed                 | In production (remove project container)         |
 | `ON_HOLD`       | Paused                    | Temporarily paused                               |
 
+> **Provider note**: These statuses should be mapped to the provider's native status system where possible (e.g., ClickUp native statuses on the Project Index List/Space). This avoids dependency on custom fields that may not be creatable via API.
+
 ### Document Evolution Throughout the Project
 
 ```
 PLANNING          IN_PROGRESS       TESTING         RELEASED
 ──────────        ───────────       ───────         ────────
-CURRENT_STATUS ────────────────────────────────────→ (always)
+CURRENT STATUS ────────────────────────────────────→ (always)
 SPECIFICATIONS ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  (created at project start, survives →)
-TECHNICAL_ANALYSIS ██████░░░░░░░░░░░░░░░░░░░░░░░░░░  (created and completed here)
+TECHNICAL ANALYSIS ██████░░░░░░░░░░░░░░░░░░░░░░░░░░  (created and completed here)
 PLAN              ░░░████░░░░░░░░░░░░░░░░░░░░░░░░  (created here)
 CHANGELOG         ░░░░░░░░████████████░░░░░░░░░░░  (grows here)
-TECHNICAL_REPORT   ░░░░░░░░░███████████████████████  (grows here, survives →)
+TECHNICAL REPORT   ░░░░░░░░░███████████████████████  (grows here, survives →)
 TESTING           ░░░░░░░░░░░░░░░░░░████████░░░░░  (created here, survives →)
 Module context    ░░░░░░░░░░░░████████████████████  (created/updated here)
 ```
@@ -255,12 +248,12 @@ Module context    ░░░░░░░░░░░░████████�
 
 | Document                 | Mandatory | Created in phase | Audience       | Survives closure |
 |--------------------------|-----------|------------------|----------------|------------------|
-| CURRENT_STATUS           | Yes       | Project creation | Claude         | No               |
+| CURRENT STATUS           | Yes       | Project creation | Claude         | No               |
 | SPECIFICATIONS           | Yes       | Project creation | Claude/Team    | **Yes**          |
-| TECHNICAL_ANALYSIS       | Yes       | Analysis         | Claude         | No               |
+| TECHNICAL ANALYSIS       | Yes       | Analysis         | Claude         | No               |
 | PLAN                     | Yes       | Planning         | Claude         | No               |
 | CHANGELOG                | Yes       | Development      | Claude/Team    | Optional         |
-| TECHNICAL_REPORT         | Yes       | Development      | Engineering    | **Yes**          |
+| TECHNICAL REPORT         | Yes       | Development      | Engineering    | **Yes**          |
 | TESTING                  | Yes       | Testing          | Claude/Team    | **Yes**          |
 
 ### What Goes Where (practical rule)
@@ -272,7 +265,7 @@ Module context    ░░░░░░░░░░░░████████�
 - Acceptance criteria: how to know each requirement is met
 - Out of scope: what is explicitly NOT part of this project
 
-**In TECHNICAL_ANALYSIS** — What Claude discovers during investigation:
+**In TECHNICAL ANALYSIS** — What Claude discovers during investigation:
 - Existing code involved, affected modules, dependencies
 - Relevant data structures, relationships between tables
 - Technical constraints, limitations, edge cases
@@ -284,12 +277,12 @@ Module context    ░░░░░░░░░░░░████████�
 - Dependencies between phases
 - Database changes, wiring, configuration
 
-**In TECHNICAL_REPORT** — What Claude has built:
+**In TECHNICAL REPORT** — What Claude has built:
 - Files created, classes, methods, constants
 - Technical decisions made during implementation
 - Project-specific lessons learned
 
-**In CURRENT_STATUS** — Where we are now:
+**In CURRENT STATUS** — Where we are now:
 - What was completed, what remains, concrete next step
 
 **In CHANGELOG** — What changed and when:
@@ -301,13 +294,13 @@ Module context    ░░░░░░░░░░░░████████�
 - Test results and pass/fail status
 - Environment-specific notes
 
-**In LESSONS_LEARNED** — What's reusable across projects:
+**In LESSONS LEARNED** — What's reusable across projects:
 - Only lessons that apply beyond this specific project
 
 ### Key Difference Between the Technical Documents
 
 ```
-SPECIFICATIONS  → TECHNICAL_ANALYSIS → PLAN          → TECHNICAL_REPORT → TESTING
+SPECIFICATIONS  → TECHNICAL ANALYSIS → PLAN          → TECHNICAL REPORT → TESTING
 ──────────────    ──────────────────   ──────          ──────────────────   ───────
 What is asked?    What exists?         What to do?     What was built?      Does it work?
 
@@ -372,34 +365,34 @@ Claude MUST execute the distillation protocol when:
 **During ANALYSIS sessions:**
 | Document | Priority | What to write |
 |------|----------|---------------|
-| TECHNICAL_ANALYSIS | **Primary** | Findings: existing code, data structures, constraints, design decisions |
+| TECHNICAL ANALYSIS | **Primary** | Findings: existing code, data structures, constraints, design decisions |
 | SPECIFICATIONS | If requirements changed | Update scope, acceptance criteria, clarified constraints |
-| CURRENT_STATUS | **ALWAYS** | "Analysis of X completed, still need to analyze Y" |
+| CURRENT STATUS | **ALWAYS** | "Analysis of X completed, still need to analyze Y" |
 
 **During PLANNING sessions:**
 | Document | Priority | What to write |
 |------|----------|---------------|
 | PLAN | **Primary** | Phases, files to create/modify, order, dependencies |
-| TECHNICAL_ANALYSIS | If applicable | Enrich if new findings emerged while planning |
-| CURRENT_STATUS | **ALWAYS** | "Plan completed, next step: implement phase 1" |
+| TECHNICAL ANALYSIS | If applicable | Enrich if new findings emerged while planning |
+| CURRENT STATUS | **ALWAYS** | "Plan completed, next step: implement phase 1" |
 
 **During DEVELOPMENT sessions:**
 | Document | Priority | What to write |
 |------|----------|---------------|
-| CURRENT_STATUS | **ALWAYS** | What was done, what's left, concrete next step to resume |
-| TECHNICAL_REPORT | **Primary** | Document what was built: classes, methods, technical decisions |
+| CURRENT STATUS | **ALWAYS** | What was done, what's left, concrete next step to resume |
+| TECHNICAL REPORT | **Primary** | Document what was built: classes, methods, technical decisions |
 | CHANGELOG | If there were changes | Concrete changes with files and reason |
-| LESSONS_LEARNED | If applicable | Only if reusable across projects |
+| LESSONS LEARNED | If applicable | Only if reusable across projects |
 | Module context | **Mandatory if module logic was modified** | Updated patterns, pitfalls, files, dependencies |
 
 **During TESTING sessions:**
 | Document | Priority | What to write |
 |------|----------|---------------|
 | TESTING | **Primary** | Test scenarios, results, edge cases, verification against SPECIFICATIONS |
-| CURRENT_STATUS | **ALWAYS** | What was tested, what passed/failed, next step |
-| TECHNICAL_REPORT | If applicable | Update with testing-related technical findings |
+| CURRENT STATUS | **ALWAYS** | What was tested, what passed/failed, next step |
+| TECHNICAL REPORT | If applicable | Update with testing-related technical findings |
 
-### CURRENT_STATUS Format When Distilling
+### CURRENT STATUS Format When Distilling
 
 ```markdown
 **Last updated**: YYYY-MM-DD
@@ -432,29 +425,30 @@ Examples:
 
 ```
 Session N
-  ├── Claude reads current_user (from .user file or CLAUDE.md)
-  ├── Claude reads PROVIDER_CACHE.md → has all entity IDs (external providers only)
-  ├── Claude reads projects/{current_user}/_INDEX.md → knows active projects
-  ├── Claude reads CURRENT_STATUS → knows exactly where to resume
-  ├── If it needs analysis context → reads TECHNICAL_ANALYSIS
+  ├── Boot sequence: CLAUDE.md → CONFIG.md → CONVENTIONS → PROVIDER_CACHE → Project Index
+  ├── Claude reads Project Index → knows active projects and their statuses
+  ├── User asks to work on project X
+  ├── Claude reads CURRENT STATUS → knows exactly where to resume
+  ├── If it needs analysis context → reads TECHNICAL ANALYSIS
   ├── If it needs the plan → reads PLAN
   ├── If it needs code context → reads the module context document
   ├── Work together (analysis, code, decisions...)
   ├── ⚠️ Distillation trigger detected
   │     ├── Claude proposes: "I'm going to consolidate the session progress"
-  │     ├── Claude updates documents in current_user's namespace
+  │     ├── Claude updates documents for the current project
   │     └── If new entities were created → updates PROVIDER_CACHE.md
   └── End of session — clean context for the next one
 
 Session N+1
-  ├── Claude reads current_user → scopes to the user's namespace
-  ├── Claude reads CURRENT_STATUS (≤50 lines, ~10 sec of context)
+  ├── Boot sequence (same as above — includes Project Index, NOT individual statuses)
+  ├── User asks to resume project X
+  ├── Claude reads CURRENT STATUS (≤50 lines, ~10 sec of context)
   ├── Reads "Next step" → knows the concrete action
   ├── If there's a "Done when" from the previous session → recommended to validate before moving forward
   └── Starts without having loaded any transcripts from previous sessions
 ```
 
-> **Multi-user note**: Distillation targets only the `current_user`'s project namespace. Shared documents (LESSONS_LEARNED, module context) are updated normally regardless of user.
+> **Multi-user note**: Distillation targets only the `current_user`'s projects. Shared documents (LESSONS LEARNED, module context) are updated normally regardless of user.
 
 ### Anti-pattern: conversation transcripts
 - Do **NOT** save conversations as files to "remember"
@@ -463,24 +457,24 @@ Session N+1
 - Everything valuable from a conversation **must be distilled** before it ends
 
 ### Staleness Rule
-If Claude reads a CURRENT_STATUS whose `Last updated` date is more than 48 hours old, it must ask the user if the information is still valid before assuming it is. Code may have changed outside of Claude (manual hotfixes, merges from other developers, DB changes).
+If Claude reads a CURRENT STATUS whose `Last updated` date is more than 48 hours old, it must ask the user if the information is still valid before assuming it is. Code may have changed outside of Claude (manual hotfixes, merges from other developers, DB changes).
 
-In multi-user mode, the staleness rule applies per user. Only the `current_user`'s CURRENT_STATUS age matters — other users' document ages are irrelevant to the current session.
+In multi-user mode, the staleness rule applies per user. Only the `current_user`'s CURRENT STATUS age matters — other users' document ages are irrelevant to the current session.
 
 ---
 
 ## Persistence Rules
 
 1. Distill at the end of every session or significant block of work (mandatory)
-2. Reusable technical finding → LESSONS_LEARNED
-3. New useful command → BUILD_COMMANDS or a scripts container
+2. Reusable technical finding → LESSONS LEARNED
+3. New useful command → BUILD COMMANDS or a scripts container
 4. New pattern or pitfall in a module → module context document
 5. **If a session modifies a module's architecture, patterns, or dependencies, updating its module context is mandatory** — not optional
 6. **Never duplicate** — if data already exists in another document, reference it
 7. New credentials → CREDENTIALS (remember: this document must not be versioned / must have restricted access)
-8. Operational debugging guides (timeouts, incorrect counts, cache) → TESTING_METHODOLOGY
+8. Operational debugging guides (timeouts, incorrect counts, cache) → TESTING METHODOLOGY
 
-## LESSONS_LEARNED Structure
+## LESSONS LEARNED Structure
 
 Organize by categories with `##` headers:
 ```markdown
@@ -495,9 +489,9 @@ Organize by categories with `##` headers:
 - ...
 ```
 
-**Pruning rule**: LESSONS_LEARNED acts as an incubator, not a permanent archive. When a lesson matures and becomes a standard for a specific module, it should be moved to that module's context document ("Watch out" section) and removed from the general document.
+**Pruning rule**: LESSONS LEARNED acts as an incubator, not a permanent archive. When a lesson matures and becomes a standard for a specific module, it should be moved to that module's context document ("Watch out" section) and removed from the general document.
 
-**Size trigger**: When LESSONS_LEARNED exceeds 30 entries, Claude must prune during distillation: review all entries, move mature lessons to the relevant module context documents, and remove them from LESSONS_LEARNED. If no entries qualify for migration, consolidate related entries or archive obsolete ones. The goal is to stay under the threshold.
+**Size trigger**: When LESSONS LEARNED exceeds 30 entries, Claude must prune during distillation: review all entries, move mature lessons to the relevant module context documents, and remove them from LESSONS LEARNED. If no entries qualify for migration, consolidate related entries or archive obsolete ones. The goal is to stay under the threshold.
 
 ## Cross-referencing Rule
 
@@ -551,12 +545,10 @@ External/hybrid providers require entity ID lookups (Space IDs, Folder IDs, List
 
 1. **Auto-generated** — Claude generates the cache file, never the user
 2. **Gitignored** — The cache is local and machine-specific; never committed
-3. **Read on startup** — Claude reads PROVIDER_CACHE.md alongside CLAUDE.md at the start of every session (if it exists)
+3. **Read on startup** — Claude reads PROVIDER_CACHE.md after CONFIG.md, before any provider operations (except CONVENTIONS)
 4. **Use cached IDs first** — When the cache has an ID for an entity, Claude uses it directly instead of searching/listing via MCP
-5. **Update on create** — When Claude creates a new entity (project folder, document, etc.), it appends the new ID to the cache immediately
-6. **Regenerate if missing** — If the file is missing, Claude generates it by querying the provider for all known entities
-7. **Regenerate if corrupted** — If a cached ID produces a "not found" error, Claude regenerates the entire cache from scratch
-8. **Multi-user safe** — The cache contains workspace-level IDs (Spaces, Folders, Lists) shared across all users. It does not contain user-specific data.
+5. **Update on create** — When Claude creates a new entity (project container, document, page, etc.), it appends the new ID to the cache immediately
+6. **Regenerate if missing or corrupted** — If the file is missing or a cached ID returns "not found", Claude regenerates the entire cache from scratch
 
 ### Cache Lifecycle
 
@@ -568,32 +560,16 @@ External/hybrid providers require entity ID lookups (Space IDs, Folder IDs, List
 | Cached ID returns "not found" from provider | Claude regenerates the entire cache |
 | Cache file manually deleted | Same as "first session" — Claude regenerates |
 
+### What Is Cached
+
+The cache maps every framework entity to the provider's entity IDs. For external providers this typically includes:
+
+- Workspace/Space/Folder IDs (infrastructure)
+- Document IDs (reference docs, project containers)
+- Page/Section IDs (individual project documents within containers)
+- Task/Item IDs (project index entries)
+- Owner information (for quick filtering without API calls)
+
 ### Cache Template
 
-The exact structure depends on the provider. See the provider's `MAPPING.md` for the provider-specific cache template. The general format is:
-
-```markdown
-# Provider Cache
-> Auto-generated by Claude. Do not edit manually.
-> Provider: {provider-name}
-> Generated: {YYYY-MM-DD}
-
-## Workspace
-- Workspace ID: ...
-- Space/Container ID: ...
-
-## Reference Documents
-| Document | ID | Type |
-|---|---|---|
-| ... | ... | ... |
-
-## Project Infrastructure
-| Entity | ID | Type |
-|---|---|---|
-| ... | ... | ... |
-
-## Projects
-| Project | Container ID | Documents |
-|---|---|---|
-| ... | ... | DOC_NAME: id, ... |
-```
+The exact structure depends on the provider. See the provider's `MAPPING.md` → "Provider Cache" section for the specific cache template and format.

@@ -6,8 +6,8 @@ A **provider** determines where your framework documents live. Pick one:
 
 | Provider | Setup guide |
 |---|---|
-| **Local `.md` files** (recommended for getting started) | [providers/markdown-files/SETUP.md](providers/markdown-files/SETUP.md) |
-| **ClickUp** | [providers/clickup/SETUP.md](providers/clickup/SETUP.md) |
+| **Local `.md` files** (recommended for getting started) | [claude-memory/providers/markdown-files/SETUP.md](claude-memory/providers/markdown-files/SETUP.md) |
+| **ClickUp** | [claude-memory/providers/clickup/SETUP.md](claude-memory/providers/clickup/SETUP.md) |
 
 > **First time?** Start with **markdown-files**. You can migrate to an external provider later.
 
@@ -21,13 +21,14 @@ Each provider has a `SETUP.md` with step-by-step instructions. The markdown-file
 
 ## Multi-user? (optional)
 
-If multiple people use Claude Code on this codebase, each person creates a `.user` file at the project root with their username:
+If multiple people use Claude Code on this codebase, each person sets their identity in `claude-memory/CONFIG.md` (gitignored):
 
 ```
-eugenio
+## User
+current_user: Eugenio
 ```
 
-Add `.user` to `.gitignore`. Projects will be separated per user automatically. Skip this for solo use.
+Projects will be assigned ownership per user automatically. Skip this for solo use.
 
 ## 3. Test it
 
@@ -43,7 +44,7 @@ Tell Claude:
 
 > "Create a project called `my-feature`"
 
-Claude reads CONVENTIONS.md and creates the project structure automatically (in your chosen provider).
+Claude reads CONVENTIONS and creates the project structure automatically (in your chosen provider).
 
 ## 5. Work and distill
 

@@ -19,11 +19,12 @@ Most external providers (ClickUp, Notion, etc.) are **hybrid**: some documents a
 
 **Always on disk (regardless of provider):**
 - **Root index** (`CLAUDE.md`) — Claude Code reads this file on startup. It must exist at the project root.
+- **Configuration** (`claude-memory/CONFIG.md`) — Provider type, connection settings, user identity. Gitignored (per-user, may contain API keys).
 - **Module context** (`{module}/CLAUDE.md`) — Code documentation co-located with the code. Claude reads it natively when working on a module.
 
 **In the external platform:**
-- Reference documents (ARCHITECTURE, CONVENTIONS, BUILD_COMMANDS, etc.)
-- Project documents (CURRENT_STATUS, TECHNICAL_ANALYSIS, PLAN, etc.)
+- Reference documents (ARCHITECTURE, CONVENTIONS, BUILD COMMANDS, etc.)
+- Project documents (CURRENT STATUS, TECHNICAL ANALYSIS, PLAN, etc.)
 - Project index
 
 The **markdown-files** provider is the only fully local provider — everything lives on disk. All other providers are hybrid by nature.
@@ -50,13 +51,12 @@ Each provider folder contains:
 
 ## Multi-User Support
 
-When `current_user` is configured in the framework, each provider must handle per-user project namespaces. Each provider's `MAPPING.md` and `SETUP.md` document:
-- How per-user namespaces map to the provider's entities (directories, folders, etc.)
-- How the project index handles ownership (per-user indexes, assignee fields, filtered views, etc.)
+When `current_user` is configured in `CONFIG.md`, each provider must handle project ownership. Each provider's `MAPPING.md` and `SETUP.md` document:
+- How project ownership is tracked (assignee fields, filtered views, etc.)
 - How `current_user` maps to the provider's identity system
 - The migration path from single-user to multi-user
 
-See `CONVENTIONS.md` → "Multi-User Mode" for the framework-level rules.
+See CONVENTIONS → "Multi-User Mode" for the framework-level rules.
 
 ## Creating a New Provider
 
@@ -66,7 +66,7 @@ To add support for a new platform (Notion, Linear, Jira, Google Docs, etc.):
 2. Create `SETUP.md` with configuration instructions
 3. Create `MAPPING.md` with a complete mapping of:
    - Each framework document → platform entity type
-   - Each container (project folder, module context) → platform structure
+   - Each container (project container, module context) → platform structure
    - Cross-references → how documents link to each other
    - The distillation workflow → how Claude reads/writes on the platform
 4. Submit a PR
@@ -75,15 +75,18 @@ To add support for a new platform (Notion, Linear, Jira, Google Docs, etc.):
 
 Your `MAPPING.md` must cover how the provider handles:
 
-- [ ] **Layer 1**: Root index — always on disk as `CLAUDE.md`. State this explicitly in your mapping.
-- [ ] **Layer 2**: Reference documents (ARCHITECTURE, CONVENTIONS, BUILD_COMMANDS, etc.)
-- [ ] **Layer 3**: Module context — always on disk as `{module}/CLAUDE.md`. State this explicitly in your mapping.
+- [ ] **Layer 1**: Root index — always on disk as `CLAUDE.md`. State this explicitly.
+- [ ] **Configuration**: `claude-memory/CONFIG.md` — always on disk, gitignored. State this explicitly.
+- [ ] **Layer 2**: Reference documents (ARCHITECTURE, CONVENTIONS, BUILD COMMANDS, etc.)
+- [ ] **Layer 3**: Module context — always on disk as `{module}/CLAUDE.md`. State this explicitly.
 - [ ] **Project containers**: How projects are organized
-- [ ] **Project documents**: CURRENT_STATUS, SPECIFICATIONS, TECHNICAL_ANALYSIS, PLAN, CHANGELOG, TECHNICAL_REPORT, TESTING
-- [ ] **Project index**: The equivalent of _INDEX.md
+- [ ] **Project documents**: CURRENT STATUS, SPECIFICATIONS, TECHNICAL ANALYSIS, PLAN, CHANGELOG, TECHNICAL REPORT, TESTING
+- [ ] **Project index**: How project metadata is tracked (status, ownership, branch)
 - [ ] **Cross-references**: How documents point to each other
 - [ ] **Read/write operations**: How Claude accesses documents (native file tools for on-disk, MCP/API for external)
+- [ ] **Boot sequence**: How Claude discovers provider structure (warm start with cache, cold start without)
 - [ ] **Version control**: How changes are tracked
 - [ ] **Access control**: Credentials, permissions, sensitive documents
-- [ ] **Multi-user**: How per-user project namespaces are structured, how ownership is tracked, migration path from single-user
-- [ ] **Provider Cache**: Cache template for the provider's entity IDs, generation workflow, update triggers
+- [ ] **Multi-user**: How ownership is tracked, migration path from single-user
+- [ ] **Provider Cache**: Cache template for entity IDs, generation workflow, update triggers
+- [ ] **Provider limitations**: API constraints that affect the mapping (e.g., no custom field creation, no nested containers)

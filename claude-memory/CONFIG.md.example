@@ -1,0 +1,26 @@
+# Memory Configuration
+
+> **Template file.** Copy this to `CONFIG.md` and fill in your settings.
+> `CONFIG.md` is gitignored — your identity and API keys will not be committed.
+
+## User
+current_user: Your Name
+
+## Provider
+provider: markdown-files
+
+## Connection
+# Uncomment and configure for external providers:
+
+# Option 1: MCP server (preferred — auth handled by MCP config)
+# mcp_server: clickup
+
+# Option 2: API key (if no MCP server available)
+# api_key: pk_your_key_here
+
+## Provider Structure
+# Only needed for external providers (ClickUp, Notion, etc.):
+# space_name: Claude Memory
+# reference_folder: Reference
+# projects_folder: Projects
+# project_index_list: Project Index
