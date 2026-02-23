@@ -11,7 +11,7 @@ Read docs → Work →           Read docs → Work →           Read docs → 
 Update docs                  Update docs                  Update docs
 ```
 
-**Architected by [Eugenio Ruiz de la Cuesta](https://www.linkedin.com/in/eugenio-ruiz-de-la-cuesta-fdez/) (orchestrating Claude Opus 4.6)** · v0.2.2 · [Unlicense](LICENSE)
+**Architected by [Eugenio Ruiz de la Cuesta](https://www.linkedin.com/in/eugenio-ruiz-de-la-cuesta-fdez/) (orchestrating Claude Opus 4.6)** · v0.2.3 · [Unlicense](LICENSE)
 [@guachoxx](https://github.com/guachoxx)
 
 ---
