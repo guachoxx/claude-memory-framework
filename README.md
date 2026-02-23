@@ -20,7 +20,7 @@ Update docs                  Update docs                  Update docs
 
 | Problem | Without the framework | With the framework |
 |---------|----------------------|-------------------|
-| New session | Claude starts from zero | Claude reads CURRENT STATUS, resumes in 30 seconds |
+| New session | Claude starts from zero | Claude reads Project Index, picks up where you left off |
 | Long session | Context fills up, hallucinations start | Distillation protocol saves progress before context runs out |
 | Technical decisions | Lost in conversation transcripts | Persisted in structured documents |
 | Onboarding Claude to your code | Re-explain every time | Module context documents provide instant context |
@@ -55,10 +55,11 @@ Want to add your own? See [claude-memory/providers/README.md](claude-memory/prov
 | [HUMANS_START_HERE.md](HUMANS_START_HERE.md) | Full documentation: architecture, workflow, rules, adaptation guide |
 | [CONVENTIONS.md](claude-memory/CONVENTIONS.md) | Framework rules, document templates, distillation protocol |
 | [providers/](claude-memory/providers/) | Provider-specific setup and mapping guides |
+| [example/](example/) | Worked end-to-end example with realistic project content |
 
 ## How It Works
 
-1. **Session starts** — Claude reads the root index (~70 lines), sees active projects, reads the CURRENT STATUS of the relevant one. Oriented in ≤30 seconds.
+1. **Session starts** — Claude reads the root index (~70 lines), CONVENTIONS, and the Project Index. Oriented in ≤30 seconds. Reads a project's CURRENT STATUS only when you ask to work on it.
 
 2. **During work** — Claude reads deeper documents only as needed: analysis, plan, module context. No wasted tokens on unnecessary context.
 

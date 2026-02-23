@@ -66,7 +66,7 @@ Place `CLAUDE.md` at your project root. This is what Claude reads on startup. It
 
 ### 4. Create CONFIG.md
 
-Create `claude-memory/CONFIG.md` with your provider settings. Add it to `.gitignore` (it contains per-user configuration and may contain API keys).
+Copy `claude-memory/CONFIG.md.example` to `claude-memory/CONFIG.md` and fill in your settings. CONFIG.md is gitignored (it contains per-user configuration and may contain API keys).
 
 ```markdown
 # Memory Configuration
@@ -202,7 +202,7 @@ The value must be resolvable by the ClickUp MCP server's `clickup_resolve_assign
 Project ownership is tracked via the **native Assignee** field on Project Index tasks (not a custom field). When `current_user` is set, Claude:
 - **Creates** new tasks with Assignee = `current_user`
 - **Filters** the Project Index by Assignee when listing "my projects"
-- **Can read** all projects regardless of owner (libre acceso)
+- **Can read** all projects regardless of owner (freely accessible)
 
 ### 3. Create per-user Views (recommended)
 

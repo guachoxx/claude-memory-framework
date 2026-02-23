@@ -15,9 +15,10 @@
 your-project/
 ├── CLAUDE.md                          ← Place at project root
 └── claude-memory/
+    ├── CONFIG.md.example              ← Copy to CONFIG.md and fill in (gitignored)
     ├── CONVENTIONS.md                 ← Framework rules
     ├── ARCHITECTURE.md                ← Empty template
-    ├── CREDENTIALS.md.example          ← Copy to CREDENTIALS.md and fill in
+    ├── CREDENTIALS.md.example         ← Copy to CREDENTIALS.md and fill in (gitignored)
     ├── BUILD_COMMANDS.md              ← Empty template
     ├── TESTING_METHODOLOGY.md         ← Empty template
     ├── LESSONS_LEARNED.md             ← Empty template
@@ -70,7 +71,7 @@ If multiple people use Claude Code on the same codebase:
 
 ### 1. Set `current_user` in CONFIG.md
 
-Each user creates `claude-memory/CONFIG.md` (gitignored) with their identity:
+Each user copies `claude-memory/CONFIG.md.example` to `claude-memory/CONFIG.md` (gitignored) and sets their identity:
 
 ```markdown
 # Memory Configuration

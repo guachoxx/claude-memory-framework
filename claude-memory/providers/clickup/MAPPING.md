@@ -288,13 +288,15 @@ Every ClickUp entity that Claude needs to access by ID is cached in `claude-memo
 2. Claude reads `claude-memory/CONFIG.md` (on disk)
 3. Claude reads `claude-memory/PROVIDER_CACHE.md` (on disk) — all IDs available
 4. Claude reads CONVENTIONS (ClickUp, using cached Doc ID + Page ID)
-5. Ready to work
+5. Claude reads Project Index — overview of active projects (names, statuses, owners)
+6. Ready to work. Reads a project's CURRENT STATUS only when the user asks to work on it.
 
 **Session startup (cold — no cache)**:
 1. Claude reads `CLAUDE.md` + `CONFIG.md`
 2. Claude discovers ClickUp structure (see "Initial Generation" below)
 3. Claude reads CONVENTIONS
-4. Ready to work
+4. Claude reads Project Index
+5. Ready to work
 
 **During work**:
 - When Claude creates a new project Doc or Page → appends the new ID to the cache
@@ -349,7 +351,7 @@ Space: "Claude Memory"
 When `current_user` is set, Claude:
 - **Creates** new project tasks with Assignee = `current_user` (resolved via `clickup_resolve_assignees`)
 - **Filters** the Project Index by Assignee when listing "my projects"
-- **Can read** all projects regardless of owner (libre acceso)
+- **Can read** all projects regardless of owner (freely accessible)
 - **Creates** project Docs directly inside the Projects folder
 
 ### Per-User Views (recommended)

@@ -63,7 +63,7 @@ Some providers are **hybrid**: the root index (`CLAUDE.md`) and module context d
 
 ### Starting a session
 
-You don't need to do anything special. Claude reads the root index on startup, then CONFIG.md for your identity and provider settings, then CONVENTIONS for the framework rules, then PROVIDER_CACHE for cached entity IDs (external providers only), and then reads the CURRENT STATUS of the relevant project. In 30 seconds it knows where to resume.
+You don't need to do anything special. Claude reads the root index on startup, then CONFIG.md for your identity and provider settings, then CONVENTIONS for the framework rules, then PROVIDER_CACHE for cached entity IDs (external providers only), and finally the Project Index for an overview of active projects. In 30 seconds it knows what's going on. It reads a project's CURRENT STATUS only when you ask to work on it — not all projects upfront.
 
 If you want to be explicit:
 
@@ -215,10 +215,6 @@ When `current_user` is set, Claude assigns ownership to new projects and can fil
 See `claude-memory/CONVENTIONS.md` → "Multi-User Mode" for the full rules.
 
 ---
-
-## Scalability
-
-The framework supports multi-user project ownership out of the box. Set `current_user` in `claude-memory/CONFIG.md` to enable per-user project ownership. Each user's projects are identified by owner while reference documents and module context remain shared. See "Multi-User Setup" above.
 
 ## Quick Document Reference
 

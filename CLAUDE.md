@@ -32,7 +32,8 @@
 2. Read `claude-memory/CONFIG.md` — provider type, user identity, connection
 3. Read CONVENTIONS (from provider) — framework operational rules. **Mandatory on every session.**
 4. Read `claude-memory/PROVIDER_CACHE.md` — cached entity IDs (warm start) or discover provider structure (cold start)
-5. Ready to work
+5. **Read Project Index** — overview of active projects (names, statuses, owners). Do NOT read individual project CURRENT STATUS pages at this point.
+6. Ready to work. Read a project's CURRENT STATUS only when the user asks to work on it.
 
 ## Per-module Context
 Module context documents describe the code **as it is**: patterns, pitfalls, key files. Consult them when working on that module. These always live on disk alongside the code, regardless of provider.
