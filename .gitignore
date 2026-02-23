@@ -8,8 +8,8 @@
 # Claude internal files
 .claude/
 
-# User identity (local, per-machine)
-.user
+# User configuration (per-machine, may contain API keys)
+claude-memory/CONFIG.md
 
 # Credentials (sensitive, local only)
 claude-memory/CREDENTIALS.md
@@ -18,16 +18,12 @@ claude-memory/CREDENTIALS.md
 claude-memory/PROVIDER_CACHE.md
 
 # Logs (downloaded on demand, heavy, temporary)
-claude-memory/logs/
+claude-memory/logs/*
 !claude-memory/logs/.gitkeep
 
 # Temporary files
-claude-memory/temp/
+claude-memory/temp/*
 !claude-memory/temp/.gitkeep
-
-# Orphan placeholder directories
-scripts/
-templates/
 
 # Windows artifacts
 desktop.ini

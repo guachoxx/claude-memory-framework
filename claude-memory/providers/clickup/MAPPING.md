@@ -9,6 +9,7 @@ These constraints affect how the framework maps to ClickUp:
 1. **No nested Folders** — ClickUp Folders cannot contain other Folders. Project containers cannot be sub-folders of a "Projects" folder.
 2. **No custom field creation via API** — Custom fields must be created manually in the ClickUp UI. The framework uses native fields (Status, Assignee) instead of custom fields wherever possible.
 3. **Docs support multiple Pages** — A single Doc can contain multiple Pages, each with independent content. This is the native way to group related documents.
+4. **Search does not match underscores in Doc/Page names** — `clickup_search` cannot find Docs or Pages whose names contain underscores (e.g., `LESSONS_LEARNED`). Use spaces instead (e.g., `LESSONS LEARNED`). This affects cold start discovery and any search-based lookups.
 
 ## Entity Mapping Overview
 
@@ -16,7 +17,7 @@ These constraints affect how the framework maps to ClickUp:
 |---|---|
 | Reference document | Doc (single-page) in Reference folder |
 | Project container | Doc (multi-page) in Projects folder |
-| Project document (CURRENT_STATUS, PLAN, etc.) | Page inside a project Doc |
+| Project document (CURRENT STATUS, PLAN, etc.) | Page inside a project Doc |
 | Project index | List with tasks (one task per project) |
 | Project ownership | Native Assignee on Project Index task |
 | Project status | Native Status on Project Index task/list |
@@ -55,23 +56,23 @@ CLAUDE.md (root index)                   Space: "Claude Memory"
 claude-memory/                           ├── Folder: "Reference"
   ├── CONFIG.md (gitignored)             │   ├── Doc: ARCHITECTURE
   ├── PROVIDER_CACHE.md (gitignored)     │   ├── Doc: CONVENTIONS
-  ├── providers/ (committed)             │   ├── Doc: BUILD_COMMANDS
-  ├── scripts/permanent/ (committed)     │   ├── Doc: TESTING_METHODOLOGY
+  ├── providers/ (committed)             │   ├── Doc: BUILD COMMANDS
+  ├── scripts/permanent/ (committed)     │   ├── Doc: TESTING METHODOLOGY
   ├── templates/ (committed)             │   ├── Doc: CREDENTIALS (restricted)
-  └── logs/, temp/ (gitignored)          │   └── Doc: LESSONS_LEARNED
+  └── logs/, temp/ (gitignored)          │   └── Doc: LESSONS LEARNED
                                          └── Folder: "Projects"
                                              ├── List: "Project Index"
 src/{module}/CLAUDE.md (committed)
                                              ├── Doc: "{project-a}"
-                                             │   ├── Page: CURRENT_STATUS
+                                             │   ├── Page: CURRENT STATUS
                                              │   ├── Page: SPECIFICATIONS
-                                             │   ├── Page: TECHNICAL_ANALYSIS
+                                             │   ├── Page: TECHNICAL ANALYSIS
                                              │   ├── Page: PLAN
                                              │   ├── Page: CHANGELOG
-                                             │   ├── Page: TECHNICAL_REPORT
+                                             │   ├── Page: TECHNICAL REPORT
                                              │   └── Page: TESTING
                                              └── Doc: "{project-b}"
-                                                 └── Page: CURRENT_STATUS
+                                                 └── Page: CURRENT STATUS
 ```
 
 ## Layer 1: Root Index
@@ -89,10 +90,10 @@ The on-disk `CLAUDE.md` is the authoritative entry point. It directs Claude to r
 |---|---|---|
 | Architecture | Doc: `ARCHITECTURE` | Reference folder |
 | Conventions | Doc: `CONVENTIONS` | Reference folder |
-| Build commands | Doc: `BUILD_COMMANDS` | Reference folder |
-| Testing methodology | Doc: `TESTING_METHODOLOGY` | Reference folder |
+| Build commands | Doc: `BUILD COMMANDS` | Reference folder |
+| Testing methodology | Doc: `TESTING METHODOLOGY` | Reference folder |
 | Credentials | Doc: `CREDENTIALS` | Reference folder (restricted) |
-| Lessons learned | Doc: `LESSONS_LEARNED` | Reference folder |
+| Lessons learned | Doc: `LESSONS LEARNED` | Reference folder |
 
 Each reference document is a single-page Doc (one Doc, one Page with the content).
 
@@ -106,7 +107,7 @@ Module context **always lives on disk** regardless of provider. Claude Code read
 
 ## Project Containers
 
-Each project is a **multi-page Doc** inside the Projects folder. All project documents (CURRENT_STATUS, PLAN, etc.) are **Pages** within that Doc.
+Each project is a **multi-page Doc** inside the Projects folder. All project documents (CURRENT STATUS, PLAN, etc.) are **Pages** within that Doc.
 
 | Framework concept | ClickUp entity |
 |---|---|
@@ -157,12 +158,12 @@ Each project document is a **Page** inside the project's Doc:
 
 | Framework document | ClickUp entity | Location |
 |---|---|---|
-| Current Status | Page: `CURRENT_STATUS` | Doc: `{project-name}` |
+| Current Status | Page: `CURRENT STATUS` | Doc: `{project-name}` |
 | Specifications | Page: `SPECIFICATIONS` | Doc: `{project-name}` |
-| Technical Analysis | Page: `TECHNICAL_ANALYSIS` | Doc: `{project-name}` |
+| Technical Analysis | Page: `TECHNICAL ANALYSIS` | Doc: `{project-name}` |
 | Plan | Page: `PLAN` | Doc: `{project-name}` |
 | Changelog | Page: `CHANGELOG` | Doc: `{project-name}` |
-| Technical Report | Page: `TECHNICAL_REPORT` | Doc: `{project-name}` |
+| Technical Report | Page: `TECHNICAL REPORT` | Doc: `{project-name}` |
 | Testing | Page: `TESTING` | Doc: `{project-name}` |
 
 ## Cross-references
@@ -211,7 +212,7 @@ Claude uses **two access methods** in this hybrid provider:
 ## Lite Mode
 
 For small projects (fix, scoped refactor, <3 phases), create only:
-- Page: `CURRENT_STATUS` (with Analysis and Plan sections inline)
+- Page: `CURRENT STATUS` (with Analysis and Plan sections inline)
 - Page: `CHANGELOG`
 
 Both as Pages inside the project Doc. Promote to full structure if the project grows.
@@ -219,7 +220,7 @@ Both as Pages inside the project Doc. Promote to full structure if the project g
 ## Archiving Completed Projects
 
 When a project reaches RELEASED status:
-1. Keep `TECHNICAL_REPORT`, `SPECIFICATIONS`, and `TESTING` Pages for reference
+1. Keep `TECHNICAL REPORT`, `SPECIFICATIONS`, and `TESTING` Pages for reference
 2. Update the task in `Project Index` to RELEASED status (closed)
 3. Optionally archive or move the project Doc
 
@@ -261,10 +262,10 @@ Every ClickUp entity that Claude needs to access by ID is cached in `claude-memo
 |---|---|---|---|
 | ARCHITECTURE | abc123 | page001 | Reference (folder: fol456) |
 | CONVENTIONS | def789 | page002 | Reference |
-| BUILD_COMMANDS | ghi012 | page003 | Reference |
-| TESTING_METHODOLOGY | jkl345 | page004 | Reference |
+| BUILD COMMANDS | ghi012 | page003 | Reference |
+| TESTING METHODOLOGY | jkl345 | page004 | Reference |
 | CREDENTIALS | mno678 | page005 | Reference |
-| LESSONS_LEARNED | pqr901 | page006 | Reference |
+| LESSONS LEARNED | pqr901 | page006 | Reference |
 
 ## Project Infrastructure
 | Entity | ID | Type |
@@ -276,8 +277,8 @@ Every ClickUp entity that Claude needs to access by ID is cached in `claude-memo
 ## Projects
 | Project | Doc ID | Task ID | Owner | Pages |
 |---|---|---|---|---|
-| auth-refactor | doc111 | tsk001 | eugenio | CURRENT_STATUS: pg101, PLAN: pg102, TECHNICAL_ANALYSIS: pg103 |
-| api-migration | doc222 | tsk002 | maria | CURRENT_STATUS: pg201, CHANGELOG: pg202 |
+| auth-refactor | doc111 | tsk001 | eugenio | CURRENT STATUS: pg101, PLAN: pg102, TECHNICAL ANALYSIS: pg103 |
+| api-migration | doc222 | tsk002 | maria | CURRENT STATUS: pg201, CHANGELOG: pg202 |
 ```
 
 ### How Claude Uses the Cache

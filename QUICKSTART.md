@@ -6,8 +6,8 @@ A **provider** determines where your framework documents live. Pick one:
 
 | Provider | Setup guide |
 |---|---|
-| **Local `.md` files** (recommended for getting started) | [providers/markdown-files/SETUP.md](providers/markdown-files/SETUP.md) |
-| **ClickUp** | [providers/clickup/SETUP.md](providers/clickup/SETUP.md) |
+| **Local `.md` files** (recommended for getting started) | [claude-memory/providers/markdown-files/SETUP.md](claude-memory/providers/markdown-files/SETUP.md) |
+| **ClickUp** | [claude-memory/providers/clickup/SETUP.md](claude-memory/providers/clickup/SETUP.md) |
 
 > **First time?** Start with **markdown-files**. You can migrate to an external provider later.
 
@@ -44,7 +44,7 @@ Tell Claude:
 
 > "Create a project called `my-feature`"
 
-Claude reads CONVENTIONS.md and creates the project structure automatically (in your chosen provider).
+Claude reads CONVENTIONS and creates the project structure automatically (in your chosen provider).
 
 ## 5. Work and distill
 

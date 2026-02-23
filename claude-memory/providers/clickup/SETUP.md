@@ -18,19 +18,19 @@ Workspace
     ├── Folder: "Reference"                    ← Layer 2 (reference documents)
     │   ├── Doc: "ARCHITECTURE"
     │   ├── Doc: "CONVENTIONS"
-    │   ├── Doc: "BUILD_COMMANDS"
-    │   ├── Doc: "TESTING_METHODOLOGY"
+    │   ├── Doc: "BUILD COMMANDS"
+    │   ├── Doc: "TESTING METHODOLOGY"
     │   ├── Doc: "CREDENTIALS"                 ← Restrict permissions
-    │   └── Doc: "LESSONS_LEARNED"
+    │   └── Doc: "LESSONS LEARNED"
     └── Folder: "Projects"                     ← Project containers
         ├── List: "Project Index"              ← One task per project
         └── Doc: "{project-name}"              ← One Doc per project
-            ├── Page: "CURRENT_STATUS"
+            ├── Page: "CURRENT STATUS"
             ├── Page: "SPECIFICATIONS"
-            ├── Page: "TECHNICAL_ANALYSIS"
+            ├── Page: "TECHNICAL ANALYSIS"
             ├── Page: "PLAN"
             ├── Page: "CHANGELOG"
-            ├── Page: "TECHNICAL_REPORT"
+            ├── Page: "TECHNICAL REPORT"
             └── Page: "TESTING"
 ```
 
@@ -38,6 +38,7 @@ Workspace
 > - **Reference documents** = individual Docs (one Doc, one Page each) inside the Reference folder.
 > - **Project documents** = Pages inside a single multi-page Doc per project. ClickUp does not support nested Folders, so this is the native way to group project documents.
 > - **Layer 3 (Module Context)** always lives on disk alongside the code as `{module}/CLAUDE.md`, regardless of provider.
+> - **Naming: use SPACES, not underscores** — ClickUp search (`clickup_search`) cannot find Docs or Pages with underscores in their names. Use `LESSONS LEARNED`, not `LESSONS_LEARNED`. This is critical for cold start discovery.
 
 ## Step-by-step Setup
 
@@ -50,10 +51,10 @@ Create a Space named `Claude Memory` (or embed it in your existing project Space
 Inside the Space, create a Folder named `Reference`. Create one Doc for each reference document:
 - ARCHITECTURE
 - CONVENTIONS (paste the contents of the framework's CONVENTIONS document)
-- BUILD_COMMANDS
-- TESTING_METHODOLOGY
+- BUILD COMMANDS
+- TESTING METHODOLOGY
 - CREDENTIALS (restrict access — this is sensitive)
-- LESSONS_LEARNED
+- LESSONS LEARNED
 
 ### 3. Set up the Root Index
 
@@ -119,7 +120,7 @@ The Project Index must have statuses matching the framework's project lifecycle.
 
 Each project is a **Doc** (not a Folder) inside the Projects folder. Claude creates these via MCP tools:
 - `clickup_create_document` → creates the project Doc
-- `clickup_create_document_page` → creates each Page (CURRENT_STATUS, PLAN, etc.)
+- `clickup_create_document_page` → creates each Page (CURRENT STATUS, PLAN, etc.)
 - `clickup_create_task` → creates the Project Index entry with status and assignee
 
 ### 6. Configure Claude Code access

@@ -17,7 +17,7 @@ your-project/
 └── claude-memory/
     ├── CONVENTIONS.md                 ← Framework rules
     ├── ARCHITECTURE.md                ← Empty template
-    ├── CREDENTIALS.md                 ← Empty template
+    ├── CREDENTIALS.md.example          ← Copy to CREDENTIALS.md and fill in
     ├── BUILD_COMMANDS.md              ← Empty template
     ├── TESTING_METHODOLOGY.md         ← Empty template
     ├── LESSONS_LEARNED.md             ← Empty template

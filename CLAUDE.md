@@ -5,7 +5,7 @@
 ## Configuration
 
 <!-- User identity and provider settings live in claude-memory/CONFIG.md (gitignored).
-     See providers/ for setup instructions.
+     See claude-memory/providers/ for setup instructions.
      When current_user is not set, the framework operates in single-user mode. -->
 
 ## Quick Navigation
@@ -14,10 +14,10 @@
 | ---------------------------------- | -------------------------------------- |
 | Understand the architecture        | ARCHITECTURE document                  |
 | Credentials, endpoints, connection | CREDENTIALS document                   |
-| Build commands                     | BUILD_COMMANDS document                |
-| Testing methodology                | TESTING_METHODOLOGY document           |
+| Build commands                     | BUILD COMMANDS document                |
+| Testing methodology                | TESTING METHODOLOGY document           |
 | Conventions and memory rules       | CONVENTIONS document                   |
-| Reusable technical lessons         | LESSONS_LEARNED document               |
+| Reusable technical lessons         | LESSONS LEARNED document               |
 | See active projects and status     | Project index                          |
 | Available providers                | `claude-memory/providers/`             |
 | Provider-specific setup            | `claude-memory/providers/{provider}/SETUP.md` |
@@ -41,19 +41,19 @@ Module context documents describe the code **as it is**: patterns, pitfalls, key
 Context runs out. Before that happens, **Claude MUST distill** the work into memory documents. The user can ask "consolidate" or "distill the session" at any time:
 
 1. **SPECIFICATIONS** → Update if requirements or acceptance criteria changed
-2. **TECHNICAL_ANALYSIS** → Enrich if there were new findings (existing code, constraints, data structures)
+2. **TECHNICAL ANALYSIS** → Enrich if there were new findings (existing code, constraints, data structures)
 3. **PLAN** → Update if the phase plan changed or new dependencies were discovered
-4. **TECHNICAL_REPORT** → Document what was built (for the engineering team)
+4. **TECHNICAL REPORT** → Document what was built (for the engineering team)
 5. **TESTING** → Record test scenarios, results, and verification against specifications
-6. **CURRENT_STATUS** → Update ALWAYS: what was done, what's left, concrete next step
+6. **CURRENT STATUS** → Update ALWAYS: what was done, what's left, concrete next step
 7. **CHANGELOG** → Record code changes made
-8. **LESSONS_LEARNED** → Add reusable lessons across projects
+8. **LESSONS LEARNED** → Add reusable lessons across projects
 9. **Module context** → Update if the module's code changed
 10. **PROVIDER_CACHE** → Update if new external entities were created (projects, documents)
 
 **Rule**: If the user doesn't ask, Claude must propose it proactively when it detects the context is filling up or at the end of a significant block of work. The next session ONLY reads distilled documents — never conversation transcripts.
 
-> **Multi-user**: Distillation targets only the `current_user`'s projects. Shared documents (LESSONS_LEARNED, module context) are updated normally regardless of user.
+> **Multi-user**: Distillation targets only the `current_user`'s projects. Shared documents (LESSONS LEARNED, module context) are updated normally regardless of user.
 
 See CONVENTIONS → "Session Distillation Protocol" for the full process.
 

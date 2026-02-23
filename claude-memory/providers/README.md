@@ -23,8 +23,8 @@ Most external providers (ClickUp, Notion, etc.) are **hybrid**: some documents a
 - **Module context** (`{module}/CLAUDE.md`) — Code documentation co-located with the code. Claude reads it natively when working on a module.
 
 **In the external platform:**
-- Reference documents (ARCHITECTURE, CONVENTIONS, BUILD_COMMANDS, etc.)
-- Project documents (CURRENT_STATUS, TECHNICAL_ANALYSIS, PLAN, etc.)
+- Reference documents (ARCHITECTURE, CONVENTIONS, BUILD COMMANDS, etc.)
+- Project documents (CURRENT STATUS, TECHNICAL ANALYSIS, PLAN, etc.)
 - Project index
 
 The **markdown-files** provider is the only fully local provider — everything lives on disk. All other providers are hybrid by nature.
@@ -77,10 +77,10 @@ Your `MAPPING.md` must cover how the provider handles:
 
 - [ ] **Layer 1**: Root index — always on disk as `CLAUDE.md`. State this explicitly.
 - [ ] **Configuration**: `claude-memory/CONFIG.md` — always on disk, gitignored. State this explicitly.
-- [ ] **Layer 2**: Reference documents (ARCHITECTURE, CONVENTIONS, BUILD_COMMANDS, etc.)
+- [ ] **Layer 2**: Reference documents (ARCHITECTURE, CONVENTIONS, BUILD COMMANDS, etc.)
 - [ ] **Layer 3**: Module context — always on disk as `{module}/CLAUDE.md`. State this explicitly.
 - [ ] **Project containers**: How projects are organized
-- [ ] **Project documents**: CURRENT_STATUS, SPECIFICATIONS, TECHNICAL_ANALYSIS, PLAN, CHANGELOG, TECHNICAL_REPORT, TESTING
+- [ ] **Project documents**: CURRENT STATUS, SPECIFICATIONS, TECHNICAL ANALYSIS, PLAN, CHANGELOG, TECHNICAL REPORT, TESTING
 - [ ] **Project index**: How project metadata is tracked (status, ownership, branch)
 - [ ] **Cross-references**: How documents point to each other
 - [ ] **Read/write operations**: How Claude accesses documents (native file tools for on-disk, MCP/API for external)
