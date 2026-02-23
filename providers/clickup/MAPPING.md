@@ -6,20 +6,26 @@
 
 | Framework concept | ClickUp entity |
 |---|---|
-| Document | Doc |
+| Document (reference / project) | Doc |
 | Container | Folder |
 | Project container | Folder inside "Projects" |
 | Project index | List with tasks (one per project) |
 | Reference | Link between Docs or `@mention` |
-| Module context | Doc inside "Module Context" folder |
+| Module context | **On disk**: `{module}/CLAUDE.md` (not in ClickUp) |
+| Root index | **On disk**: `CLAUDE.md` + optional ClickUp Doc `CLAUDE Index` |
+
+> **Hybrid provider**: Module context always lives on disk. Reference documents and project documents live in ClickUp. The root index lives on disk as `CLAUDE.md` (Claude's entry point) and may optionally be mirrored as a ClickUp Doc for team navigation.
 
 ## Layer 1: Root Index
 
-| Framework document | ClickUp entity |
-|---|---|
-| Root index | Doc: `CLAUDE Index` at Space level |
+The root index has two components in this hybrid provider:
 
-This Doc is the entry point. It contains navigation links to all other Docs. Claude reads it first on every session.
+| Component | Where | Purpose |
+|---|---|---|
+| `CLAUDE.md` | **On disk**, project root | Bootstrap entry point. Claude reads this natively on startup. Contains system overview, provider instructions, and navigation. |
+| `CLAUDE Index` (optional) | ClickUp Doc, Space level | Team-facing navigation hub with links to all ClickUp Docs. Useful for humans browsing the Space. |
+
+The on-disk `CLAUDE.md` is the authoritative entry point. It should contain a note telling Claude to use MCP tools to access project and reference documents in ClickUp.
 
 ## Layer 2: Reference Documents
 
@@ -34,11 +40,11 @@ This Doc is the entry point. It contains navigation links to all other Docs. Cla
 
 ## Layer 3: Module Context
 
-| Framework document | ClickUp entity | Location |
+| Framework document | Persisted as | Location |
 |---|---|---|
-| Module context | Doc: `{module-name}` | Module Context folder |
+| Module context | `{module}/CLAUDE.md` (~50 lines max) | **On disk**, alongside the code |
 
-One Doc per code module. Name the Doc after the module (e.g., `auth-service`, `payment-gateway`).
+Module context **always lives on disk** regardless of provider. Claude Code reads these files natively when working on a module. They are code documentation, not project documentation — they belong with the code they describe.
 
 ## Project Containers
 
@@ -87,12 +93,18 @@ See @CONVENTIONS → "Session Distillation Protocol"
 
 ## Read/Write Operations
 
-Claude accesses ClickUp through the MCP server, which exposes tools for:
-- Reading Doc content
+Claude uses **two access methods** in this hybrid provider:
+
+**On disk (native file tools):**
+- Root index (`CLAUDE.md`) — read on every session startup
+- Module context (`{module}/CLAUDE.md`) — read when working on a module
+
+**In ClickUp (MCP tools):**
+- Reading Doc content (reference and project documents)
 - Updating Doc content
-- Creating new Docs
-- Listing Docs in a Folder
-- Managing tasks in Lists (for Project Index)
+- Creating new Docs (when creating a project or new reference document)
+- Listing Docs in a Folder (to find project documents)
+- Managing tasks in Lists (for Project Index — creating, updating status)
 
 ## Lite Mode in ClickUp
 

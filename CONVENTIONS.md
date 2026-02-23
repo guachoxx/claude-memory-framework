@@ -22,6 +22,7 @@
 - Describe the code **as it IS**: what the module does, what patterns it follows, known pitfalls.
 - Do **NOT** contain: project status, changelogs, pending tasks.
 - They are stable — they only change when the code they accompany changes.
+- **Always live on disk alongside the code**, regardless of provider. Claude Code reads them natively. They are code documentation, not project documentation.
 
 ### Separation Rule
 

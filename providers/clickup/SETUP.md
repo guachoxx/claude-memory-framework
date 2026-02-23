@@ -15,7 +15,7 @@ Create the following structure in your ClickUp workspace:
 ```
 Workspace
 └── Space: "Claude Memory" (or your project name)
-    ├── Doc: "CLAUDE Index"                    ← Root index (Layer 1)
+    ├── Doc: "CLAUDE Index"                    ← Optional: team navigation hub
     ├── Folder: "Reference"                    ← Layer 2
     │   ├── Doc: "ARCHITECTURE"
     │   ├── Doc: "CONVENTIONS"
@@ -23,18 +23,17 @@ Workspace
     │   ├── Doc: "TESTING_METHODOLOGY"
     │   ├── Doc: "CREDENTIALS"                 ← Restrict permissions
     │   └── Doc: "LESSONS_LEARNED"
-    ├── Folder: "Projects"                     ← Project containers
-    │   ├── List: "Project Index"              ← Equivalent to _INDEX.md
-    │   └── Folder: "{project-name}"
-    │       ├── Doc: "CURRENT_STATUS"
-    │       ├── Doc: "TECHNICAL_ANALYSIS"
-    │       ├── Doc: "PLAN"
-    │       ├── Doc: "TECHNICAL_REPORT"
-    │       └── Doc: "CHANGELOG"
-    └── Folder: "Module Context"               ← Layer 3
-        ├── Doc: "{module-name}"
-        └── Doc: "{module-name}"
+    └── Folder: "Projects"                     ← Project containers
+        ├── List: "Project Index"              ← Equivalent to _INDEX.md
+        └── Folder: "{project-name}"
+            ├── Doc: "CURRENT_STATUS"
+            ├── Doc: "TECHNICAL_ANALYSIS"
+            ├── Doc: "PLAN"
+            ├── Doc: "TECHNICAL_REPORT"
+            └── Doc: "CHANGELOG"
 ```
+
+> **Layer 3 (Module Context)** always lives on disk alongside the code as `{module}/CLAUDE.md`, regardless of provider. Claude Code reads these files natively. They are NOT stored in ClickUp because they are code context, not project context. See `CONVENTIONS.md` → "Layered Memory Architecture".
 
 ## Step-by-step Setup
 
@@ -52,12 +51,21 @@ Inside the Space, create a Folder named `Reference`. Create one Doc for each ref
 - CREDENTIALS (restrict access — this is sensitive)
 - LESSONS_LEARNED
 
-### 3. Create the Root Index Doc
+### 3. Set up the Root Index
 
-At the Space level (not inside a folder), create a Doc named `CLAUDE Index`. This is the equivalent of root `CLAUDE.md`. It contains:
+The root index has two parts in this hybrid provider:
+
+**a) On disk — `CLAUDE.md` (mandatory)**
+
+Place `CLAUDE.md` at your project root. This is what Claude reads on startup. It must include:
 - System overview
-- Navigation table with links to each ClickUp Doc
+- A note that reference and project documents live in ClickUp (with Space name)
+- Navigation table pointing to document names (Claude uses MCP to find them)
 - Distillation protocol summary
+
+**b) In ClickUp — `CLAUDE Index` Doc (optional, for team navigation)**
+
+At the Space level (not inside a folder), create a Doc named `CLAUDE Index` with links to all ClickUp Docs. This is useful for humans browsing the Space, but Claude's entry point is always the on-disk `CLAUDE.md`.
 
 ### 4. Create the Projects folder
 
@@ -65,14 +73,14 @@ Create a Folder named `Projects`. Inside it, create a List named `Project Index`
 
 ### 5. Configure Claude Code access
 
-Claude Code needs the ClickUp MCP server to read/write Docs. Add to your Claude Code MCP configuration:
+Claude Code needs an MCP server to read/write ClickUp Docs. Add a ClickUp MCP server to your Claude Code configuration (`.claude/mcp.json` or global settings):
 
 ```json
 {
   "mcpServers": {
     "clickup": {
       "command": "npx",
-      "args": ["-y", "@anthropic/clickup-mcp-server"],
+      "args": ["-y", "<clickup-mcp-server-package>"],
       "env": {
         "CLICKUP_API_TOKEN": "your-token-here"
       }
@@ -81,7 +89,23 @@ Claude Code needs the ClickUp MCP server to read/write Docs. Add to your Claude 
 }
 ```
 
-> **Note**: Check for the latest ClickUp MCP server package and configuration. The example above is illustrative — use the MCP server that best fits your setup.
+> **Finding an MCP server**: Search the [MCP server registry](https://github.com/modelcontextprotocol/servers) or npm for a ClickUp MCP server that supports reading and writing Docs, listing Folders, and managing List tasks. The configuration above is a template — replace `<clickup-mcp-server-package>` with the actual package name.
+
+### How Claude interacts with ClickUp
+
+This is a **hybrid provider**: some documents live on disk, others in ClickUp.
+
+| What Claude does | How it does it |
+|---|---|
+| Read root index (`CLAUDE.md`) | Native file read (on disk) |
+| Read/update reference documents (ARCHITECTURE, etc.) | MCP tools: read/write ClickUp Docs |
+| Read/update project documents (CURRENT_STATUS, etc.) | MCP tools: read/write ClickUp Docs |
+| Read/update project index | MCP tools: list/update tasks in ClickUp List |
+| Read/update module context | Native file read/write (on disk, always) |
+| Create a new project | MCP tools: create Folder + Docs + task in List |
+| Close a project | MCP tools: archive Folder, update task status |
+
+Claude uses the ClickUp MCP tools exactly like it uses file tools — the distillation protocol and lifecycle rules work identically.
 
 ### 6. Test it
 

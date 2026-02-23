@@ -13,6 +13,21 @@ The framework is designed to be provider-agnostic. All core concepts (3-layer ar
 | [markdown-files](markdown-files/) | Local `.md` files in the repository | Solo developers, simple setups, full offline access |
 | [clickup](clickup/) | ClickUp Docs and Tasks | Teams already using ClickUp for project management |
 
+## Hybrid Providers
+
+Most external providers (ClickUp, Notion, etc.) are **hybrid**: some documents always live on disk, while the rest live in the external platform.
+
+**Always on disk (regardless of provider):**
+- **Root index** (`CLAUDE.md`) — Claude Code reads this file on startup. It must exist at the project root.
+- **Module context** (`{module}/CLAUDE.md`) — Code documentation co-located with the code. Claude reads it natively when working on a module.
+
+**In the external platform:**
+- Reference documents (ARCHITECTURE, CONVENTIONS, BUILD_COMMANDS, etc.)
+- Project documents (CURRENT_STATUS, TECHNICAL_ANALYSIS, PLAN, etc.)
+- Project index
+
+The **markdown-files** provider is the only fully local provider — everything lives on disk. All other providers are hybrid by nature.
+
 ## Choosing a Provider
 
 Consider:
@@ -47,13 +62,13 @@ To add support for a new platform (Notion, Linear, Jira, Google Docs, etc.):
 
 Your `MAPPING.md` must cover how the provider handles:
 
-- [ ] **Layer 1**: Root index (the entry point Claude reads first)
+- [ ] **Layer 1**: Root index — always on disk as `CLAUDE.md`. State this explicitly in your mapping.
 - [ ] **Layer 2**: Reference documents (ARCHITECTURE, CONVENTIONS, BUILD_COMMANDS, etc.)
-- [ ] **Layer 3**: Module context documents
+- [ ] **Layer 3**: Module context — always on disk as `{module}/CLAUDE.md`. State this explicitly in your mapping.
 - [ ] **Project containers**: How projects are organized
 - [ ] **Project documents**: CURRENT_STATUS, TECHNICAL_ANALYSIS, PLAN, TECHNICAL_REPORT, CHANGELOG
 - [ ] **Project index**: The equivalent of _INDEX.md
 - [ ] **Cross-references**: How documents point to each other
-- [ ] **Read/write operations**: How Claude accesses documents (native file access, MCP, API, etc.)
+- [ ] **Read/write operations**: How Claude accesses documents (native file tools for on-disk, MCP/API for external)
 - [ ] **Version control**: How changes are tracked
 - [ ] **Access control**: Credentials, permissions, sensitive documents
