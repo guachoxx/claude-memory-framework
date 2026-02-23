@@ -27,10 +27,12 @@ Workspace
         ├── List: "Project Index"              ← Equivalent to _INDEX.md
         └── Folder: "{project-name}"
             ├── Doc: "CURRENT_STATUS"
+            ├── Doc: "SPECIFICATIONS"
             ├── Doc: "TECHNICAL_ANALYSIS"
             ├── Doc: "PLAN"
+            ├── Doc: "CHANGELOG"
             ├── Doc: "TECHNICAL_REPORT"
-            └── Doc: "CHANGELOG"
+            └── Doc: "TESTING"
 ```
 
 > **Layer 3 (Module Context)** always lives on disk alongside the code as `{module}/CLAUDE.md`, regardless of provider. Claude Code reads these files natively. They are NOT stored in ClickUp because they are code context, not project context. See `CONVENTIONS.md` → "Layered Memory Architecture".
@@ -102,18 +104,75 @@ This is a **hybrid provider**: some documents live on disk, others in ClickUp.
 | Read/update project documents (CURRENT_STATUS, etc.) | MCP tools: read/write ClickUp Docs |
 | Read/update project index | MCP tools: list/update tasks in ClickUp List |
 | Read/update module context | Native file read/write (on disk, always) |
+| Read cached entity IDs | Native file read: `claude-memory/PROVIDER_CACHE.md` (on disk) |
 | Create a new project | MCP tools: create Folder + Docs + task in List |
 | Close a project | MCP tools: archive Folder, update task status |
 
 Claude uses the ClickUp MCP tools exactly like it uses file tools — the distillation protocol and lifecycle rules work identically.
 
-### 6. Test it
+### 6. Generate Provider Cache
+
+Once the MCP server is configured and the ClickUp structure is in place, ask Claude to generate the cache:
+
+> "Generate the provider cache for ClickUp"
+
+Claude will query the ClickUp workspace, resolve all entity IDs (Space, Folders, Lists, Docs), and write them to `claude-memory/PROVIDER_CACHE.md`. This file is gitignored and local to your machine.
+
+**What this gives you**: On subsequent sessions, Claude reads the cache on startup and has instant access to all ClickUp IDs without making MCP search calls. This saves time and tokens.
+
+**If you skip this step**: Claude will still work — it will generate the cache automatically the first time it needs to access ClickUp entities. The explicit step here just front-loads the generation.
+
+### 7. Test it
 
 Open Claude Code and say:
 
 > "Read the CLAUDE Index document in ClickUp and tell me what projects we have active."
 
 Claude should use the ClickUp MCP tools to access the document and navigate to the Project Index.
+
+## Multi-User Setup (optional)
+
+If multiple people use Claude Code on the same codebase and ClickUp workspace:
+
+### 1. Create a `.user` file at the project root
+
+Each user creates this file with their ClickUp display name or email:
+```
+eugenio
+```
+
+Add `.user` to `.gitignore`. The value must be resolvable by the ClickUp MCP server's `clickup_resolve_assignees` tool.
+
+### 2. Add the Owner field to Project Index
+
+On the `Project Index` List, add a custom field:
+- Name: `Owner`
+- Type: Assignee (People)
+
+### 3. Create user Folders
+
+Inside the `Projects` Folder, create one Folder per user:
+```
+Projects/
+├── eugenio/
+├── maria/
+└── ...
+```
+
+### 4. Create per-user Views (recommended)
+
+On the `Project Index` List, create a filtered View for each user:
+- Filter by: Owner = {username}
+- Name: `{username}'s Projects`
+
+### 5. Migration from single-user
+
+If you already have project Folders directly inside `Projects`:
+1. Create a Folder with your username inside `Projects`
+2. Move existing project Folders into your user Folder
+3. Set Owner on existing Project Index tasks
+
+> When `current_user` is set, Claude automatically creates projects inside your user Folder and sets you as Owner on the Project Index.
 
 ## Access Control
 

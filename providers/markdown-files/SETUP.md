@@ -63,6 +63,37 @@ Claude should navigate to `_INDEX.md` and report no active projects.
 
 Work normally. When done, say **"Consolidate"**. Claude updates the memory documents.
 
+## Multi-User Setup (optional)
+
+If multiple people use Claude Code on the same codebase:
+
+### 1. Create a `.user` file at the project root
+
+Each user creates this file with just their username:
+```
+eugenio
+```
+
+Add `.user` to `.gitignore` so each user keeps their own identity locally.
+
+### 2. Create your user namespace
+
+```
+claude-memory/projects/
+└── eugenio/
+    └── _INDEX.md          ← Copy the per-user _INDEX.md template from CONVENTIONS.md
+```
+
+### 3. Migration from single-user
+
+If you already have projects in the flat `claude-memory/projects/` structure:
+1. Create `claude-memory/projects/{your-name}/`
+2. Move existing project folders into it
+3. Move `_INDEX.md` into your user folder
+4. (Optional) Create a new root `_INDEX.md` as a team overview
+
+> When `current_user` is set, Claude automatically scopes all project operations to your namespace.
+
 ## How Claude Accesses Documents
 
 Claude Code reads and writes `.md` files directly via its native file tools. No additional configuration is needed.
@@ -76,6 +107,9 @@ Claude Code reads and writes `.md` files directly via its native file tools. No 
 | Project container | `claude-memory/projects/{project-name}/` |
 | Project index | `claude-memory/projects/_INDEX.md` |
 | Module context | `src/{module}/CLAUDE.md` |
+| Project container (multi-user) | `claude-memory/projects/{username}/{project-name}/` |
+| Project index (multi-user) | `claude-memory/projects/{username}/_INDEX.md` |
+| Team overview (multi-user) | `claude-memory/projects/_INDEX.md` |
 | Logs | `claude-memory/logs/` (.gitignored) |
 | Temporary files | `claude-memory/temp/` (.gitignored) |
 | Credentials | `claude-memory/CREDENTIALS.md` (.gitignored) |

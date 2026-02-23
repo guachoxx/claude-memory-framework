@@ -4,7 +4,7 @@
 
 A **provider** is the persistence backend where the framework's documents are stored. The framework defines *what* information to maintain and *when* to update it — the provider defines *where* and *how* that information is persisted.
 
-The framework is designed to be provider-agnostic. All core concepts (3-layer architecture, 5 project documents, distillation protocol, lifecycle) work the same regardless of where documents live.
+The framework is designed to be provider-agnostic. All core concepts (3-layer architecture, 7 project documents, distillation protocol, lifecycle) work the same regardless of where documents live.
 
 ## Available Providers
 
@@ -28,6 +28,9 @@ Most external providers (ClickUp, Notion, etc.) are **hybrid**: some documents a
 
 The **markdown-files** provider is the only fully local provider — everything lives on disk. All other providers are hybrid by nature.
 
+**Provider Cache (on disk, gitignored):**
+- `claude-memory/PROVIDER_CACHE.md` — Auto-generated file mapping framework document names to provider entity IDs. Eliminates redundant MCP lookups on session startup. Only used by hybrid/external providers. See `CONVENTIONS.md` → "Provider Cache" for rules.
+
 ## Choosing a Provider
 
 Consider:
@@ -44,6 +47,16 @@ Each provider folder contains:
 |------|---------|
 | `SETUP.md` | Step-by-step instructions to configure the provider |
 | `MAPPING.md` | How each framework document maps to the provider's entities |
+
+## Multi-User Support
+
+When `current_user` is configured in the framework, each provider must handle per-user project namespaces. Each provider's `MAPPING.md` and `SETUP.md` document:
+- How per-user namespaces map to the provider's entities (directories, folders, etc.)
+- How the project index handles ownership (per-user indexes, assignee fields, filtered views, etc.)
+- How `current_user` maps to the provider's identity system
+- The migration path from single-user to multi-user
+
+See `CONVENTIONS.md` → "Multi-User Mode" for the framework-level rules.
 
 ## Creating a New Provider
 
@@ -66,9 +79,11 @@ Your `MAPPING.md` must cover how the provider handles:
 - [ ] **Layer 2**: Reference documents (ARCHITECTURE, CONVENTIONS, BUILD_COMMANDS, etc.)
 - [ ] **Layer 3**: Module context — always on disk as `{module}/CLAUDE.md`. State this explicitly in your mapping.
 - [ ] **Project containers**: How projects are organized
-- [ ] **Project documents**: CURRENT_STATUS, TECHNICAL_ANALYSIS, PLAN, TECHNICAL_REPORT, CHANGELOG
+- [ ] **Project documents**: CURRENT_STATUS, SPECIFICATIONS, TECHNICAL_ANALYSIS, PLAN, CHANGELOG, TECHNICAL_REPORT, TESTING
 - [ ] **Project index**: The equivalent of _INDEX.md
 - [ ] **Cross-references**: How documents point to each other
 - [ ] **Read/write operations**: How Claude accesses documents (native file tools for on-disk, MCP/API for external)
 - [ ] **Version control**: How changes are tracked
 - [ ] **Access control**: Credentials, permissions, sensitive documents
+- [ ] **Multi-user**: How per-user project namespaces are structured, how ownership is tracked, migration path from single-user
+- [ ] **Provider Cache**: Cache template for the provider's entity IDs, generation workflow, update triggers

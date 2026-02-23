@@ -1,5 +1,5 @@
 # Credentials & Endpoints
 
-> This file is in `.gitignore` — it is NOT versioned. Keep it local only.
+> **Template file.** When adopting the framework, copy this to your project and add it to `.gitignore`.
 
 ---

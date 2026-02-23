@@ -29,10 +29,11 @@ Update docs                  Update docs                  Update docs
 
 - **3-layer memory architecture** — Root index → reference documents → per-module context. Claude loads only what it needs.
 - **Session distillation protocol** — Systematic process to save progress before context runs out. Triggered automatically or on demand.
-- **5 project documents** — Analysis, Plan, Technical Report, Status, Changelog — each with a clear audience and lifecycle.
+- **7 project documents** — Specifications, Analysis, Plan, Technical Report, Testing, Status, Changelog — each with a clear audience and lifecycle.
 - **Provider-agnostic** — Documents can live as local `.md` files, in ClickUp, Notion, or any other platform. The methodology stays the same.
 - **Lite mode** — Small projects use just 2 documents. Promotes to full structure if it grows.
 - **Stack-agnostic** — Works with any language, framework, or toolchain.
+- **Multi-user support** — Optional per-user project namespaces. Each developer's projects are isolated while sharing team-level reference docs.
 - **Zero dependencies** — No plugins, no extensions, no build steps.
 
 ## Providers
@@ -64,6 +65,10 @@ Want to add your own? See [providers/README.md](providers/README.md) for how to 
 3. **Session ends** — The distillation protocol kicks in. Claude updates the relevant memory documents based on the current project phase. Say **"Consolidate"** or Claude proposes it automatically.
 
 4. **Next session** — Starts clean. Reads only distilled documents. Never depends on conversation transcripts.
+
+## Multi-User
+
+Multiple developers can work simultaneously with Claude on the same codebase. Each user creates a `.user` file with their username — projects are then isolated per user while reference docs remain shared. See [CONVENTIONS.md](CONVENTIONS.md) → "Multi-User Mode" for details.
 
 ## Contributing
 

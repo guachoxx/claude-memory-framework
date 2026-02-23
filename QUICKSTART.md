@@ -19,6 +19,16 @@ Each provider has a `SETUP.md` with step-by-step instructions. The markdown-file
 2. Edit root `CLAUDE.md` with your system overview
 3. Update `.gitignore`
 
+## Multi-user? (optional)
+
+If multiple people use Claude Code on this codebase, each person creates a `.user` file at the project root with their username:
+
+```
+eugenio
+```
+
+Add `.user` to `.gitignore`. Projects will be separated per user automatically. Skip this for solo use.
+
 ## 3. Test it
 
 Open Claude Code at your project root and say:
